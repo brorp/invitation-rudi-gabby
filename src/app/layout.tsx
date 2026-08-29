@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "Rudi & Gabriella — Wedding Invitation",
   description:
     "We invite you to celebrate the wedding of Rudi Sukarto and Gabriella Dharmawan.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

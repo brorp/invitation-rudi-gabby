@@ -382,7 +382,7 @@ export function InvitationExperience({
                 <small>
                   {isPrivate
                     ? "We apologize if there's any misspelling of name"
-                    : "Wedding information · public view"}
+                    : "Wedding Invitation"}
                 </small>
               </div>
               <button className="pill-button light" onClick={openInvitation}>
