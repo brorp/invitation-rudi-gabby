@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600">
+  <defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#b7b3ae"/><stop offset=".5" stop-color="#65615e"/><stop offset="1" stop-color="#272727"/></linearGradient><filter id="n"><feTurbulence baseFrequency=".7" numOctaves="3" stitchTiles="stitch"/><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .14 0"/></filter></defs>
+  <rect width="1200" height="1600" fill="url(#g)"/><circle cx="760" cy="510" r="160" fill="#d2d0cb" opacity=".52"/><path d="M520 1460c45-470 130-730 250-730s215 250 260 730z" fill="#171717" opacity=".82"/><path d="M140 1510c70-430 175-650 315-650 88 0 161 75 218 226l-74 424z" fill="#eee" opacity=".52"/><rect width="1200" height="1600" filter="url(#n)" opacity=".55"/><text x="74" y="1510" fill="#fff" opacity=".7" font-family="serif" font-style="italic" font-size="30">Rudi &amp; Gabriella — photo placeholder</text>
+</svg>
