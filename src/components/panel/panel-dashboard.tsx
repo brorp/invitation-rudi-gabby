@@ -24,7 +24,6 @@ import {
   RefreshCw,
   Save,
   Search,
-  Settings2,
   Trash2,
   UploadCloud,
   UserRound,
@@ -450,14 +449,6 @@ export function PanelDashboard({
             <p>Rudi & Gabriella</p>
             <h1>{NAV_ITEMS.find((item) => item.key === tab)?.label}</h1>
           </div>
-          <div className="panel-statuses">
-            <span className={supabaseConfigured ? "ready" : "pending"}>
-              <Database size={13} /> Supabase
-            </span>
-            <span className={imageKitConfigured ? "ready" : "pending"}>
-              <ImageUp size={13} /> ImageKit
-            </span>
-          </div>
         </header>
 
         {!supabaseConfigured && (
@@ -508,62 +499,6 @@ export function PanelDashboard({
                 <span>Public wishes</span>
                 <strong>{stats.wishCount}</strong>
                 <p>Published guest comments</p>
-              </article>
-            </div>
-            <div className="panel-two-column">
-              <article className="panel-card">
-                <div className="panel-card-heading">
-                  <div>
-                    <span>Quick start</span>
-                    <h2>Launch checklist</h2>
-                  </div>
-                  <Gauge size={19} />
-                </div>
-                {[
-                  [supabaseConfigured, "Connect and seed Supabase"],
-                  [imageKitConfigured, "Connect ImageKit media library"],
-                  [invitees.length > 0, "Add the first invitee"],
-                  [
-                    !settings.media.some((item) =>
-                      item.imageUrl.includes("placeholders"),
-                    ),
-                    "Replace placeholder photography",
-                  ],
-                ].map(([done, label]) => (
-                  <div className="checklist-row" key={String(label)}>
-                    <span className={done ? "done" : ""}>
-                      {done ? <Check size={12} /> : null}
-                    </span>
-                    <p>{label}</p>
-                  </div>
-                ))}
-              </article>
-              <article className="panel-card">
-                <div className="panel-card-heading">
-                  <div>
-                    <span>Invitation</span>
-                    <h2>Website details</h2>
-                  </div>
-                  <Settings2 size={19} />
-                </div>
-                <dl className="details-list">
-                  <div>
-                    <dt>Couple</dt>
-                    <dd>{settings.content.coupleFormal}</dd>
-                  </div>
-                  <div>
-                    <dt>Date</dt>
-                    <dd>{settings.content.weddingDate}</dd>
-                  </div>
-                  <div>
-                    <dt>Pages</dt>
-                    <dd>{settings.media.length} editable visuals</dd>
-                  </div>
-                  <div>
-                    <dt>Panel route</dt>
-                    <dd>/panel-xyz123</dd>
-                  </div>
-                </dl>
               </article>
             </div>
           </div>
