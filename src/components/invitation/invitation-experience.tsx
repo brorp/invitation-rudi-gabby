@@ -8,6 +8,7 @@ import {
   Check,
   ChevronUp,
   Copy,
+  ExternalLink,
   MapPin,
   Menu,
   Music2,
@@ -1237,15 +1238,30 @@ export function InvitationExperience({
                   Our Pre-Wedding
                   <em>Video in Bali</em>
                 </h2>
-                <div className="youtube-embed">
-                  <iframe
-                    src="https://www.youtube.com/embed/szlhyb0xmCI?si=4toL31284nZNow6d"
-                    title="Rudi and Gabriella pre-wedding video in Bali"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                    loading="lazy"
-                  />
+                <div className="video-card">
+                  <div className="video-card-meta" aria-hidden="true">
+                    <span>R · G</span>
+                    <i />
+                    <span>Bali, Indonesia</span>
+                  </div>
+                  <div className="youtube-embed">
+                    <iframe
+                      src="https://www.youtube.com/embed/szlhyb0xmCI?si=4toL31284nZNow6d&rel=0&playsinline=1"
+                      title="Rudi and Gabriella pre-wedding video in Bali"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                      loading="lazy"
+                    />
+                  </div>
+                  <a
+                    className="video-watch-link"
+                    href="https://www.youtube.com/watch?v=szlhyb0xmCI"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Watch on YouTube <ExternalLink size={11} />
+                  </a>
                 </div>
               </InvitationSection>
 

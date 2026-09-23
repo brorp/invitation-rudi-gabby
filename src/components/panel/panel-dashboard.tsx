@@ -71,6 +71,17 @@ const NAV_ITEMS: Array<{
   { key: "wishes", label: "Wishes", icon: MessageSquareHeart },
 ];
 
+function whatsappInvitationMessage(inviteUrl: string) {
+  return [
+    "Dengan hati yang gembira, kami ingin mengajak kamu untuk ikut merayakan hari bahagia kami, pernikahan Rudi & Gabriella! ♡",
+    "*Minggu, 11 Oktober 2026*",
+    "📍 Sheraton Grand Jakarta Gandaria City Hotel",
+    inviteUrl,
+    "Jangan lupa konfirmasi kehadiran dan jumlah tamu yang datang lewat link di atas, ya!",
+    "Sampai ketemu di hari bahagia kami. Can’t wait to see you there! ♡",
+  ].join("\n\n");
+}
+
 function jsonFetch(url: string, init?: RequestInit) {
   return fetch(url, {
     ...init,
@@ -495,13 +506,7 @@ export function PanelDashboard({
     if (!invitee.phone) return null;
     const inviteUrl =
       window.location.origin + "/invite/" + encodeURIComponent(invitee.access_token);
-    const text =
-      "Dengan hati yang gembira, kami ingin mengajak kamu untuk ikut merayakan hari bahagia kami, pernikahan Rudi & Gabriella! ♡\n\n" +
-      "*Minggu, 11 Oktober 2026*\n\n" +
-      "📍 Sheraton Grand Jakarta Gandaria City Hotel\n\n" +
-      `${inviteUrl}\n\n` +
-      "Jangan lupa konfirmasi kehadiran dan jumlah tamu yang datang lewat link di atas, ya!\n\n" +
-      "Sampai ketemu di hari bahagia kami. Can’t wait to see you there! ♡";
+    const text = whatsappInvitationMessage(inviteUrl);
     let phone = invitee.phone.replace(/[^\d]/g, "");
     if (phone.startsWith("0")) phone = "62" + phone.slice(1);
     else if (phone.startsWith("8")) phone = "62" + phone;
