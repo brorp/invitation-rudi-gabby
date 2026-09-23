@@ -16,6 +16,9 @@ Supabase, and ImageKit.
 - Reduced-motion-aware parallax backgrounds while scrolling
 - Editable couple, date, venue, bank, and footer content
 - Replaceable background image for every invitation page
+- Multi-image gallery carousel with bulk ImageKit uploads
+- Configurable background music upload or direct audio URL
+- Dress-code artwork sourced from `public/DRESSCODE.png`
 - Authenticated ImageKit uploads
 - Password-protected CMS at /panel-xyz123
 - Desktop split-screen and full-screen mobile layouts

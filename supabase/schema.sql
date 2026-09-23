@@ -116,8 +116,12 @@ create table if not exists public.site_settings (
   id text primary key default 'main',
   content jsonb not null default '{}'::jsonb,
   media jsonb not null default '[]'::jsonb,
+  gallery jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+alter table public.site_settings
+  add column if not exists gallery jsonb not null default '[]'::jsonb;
 
 alter table public.invitees enable row level security;
 alter table public.wishes enable row level security;

@@ -19,6 +19,7 @@ import {
   LogOut,
   MessageCircle,
   MessageSquareHeart,
+  Music2,
   Pencil,
   Plus,
   RefreshCw,
@@ -38,7 +39,7 @@ import {
   useState,
 } from "react";
 
-import type { Invitee, SiteSettings, Wish } from "@/lib/types";
+import type { GalleryImage, Invitee, SiteSettings, Wish } from "@/lib/types";
 
 type Tab = "overview" | "invitees" | "content" | "media" | "wishes";
 
@@ -186,8 +187,9 @@ export function PanelDashboard({
 
   async function addInvitee(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setMessage("");
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const response = await jsonFetch("/api/panel/invitees", {
       method: "POST",
       body: JSON.stringify({
@@ -202,7 +204,7 @@ export function PanelDashboard({
       setInvitees((current) => [result.invitee, ...current]);
       setAddOpen(false);
       setMessage("Invitee added.");
-      event.currentTarget.reset();
+      formElement.reset();
     } else setMessage(result.error || "Unable to add invitee.");
   }
 
@@ -332,7 +334,8 @@ export function PanelDashboard({
     event: ChangeEvent<HTMLInputElement>,
     key: string,
   ) {
-    const file = event.target.files?.[0];
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     if (!file) return;
     setUploadingKey(key);
     setMessage("");
@@ -357,7 +360,116 @@ export function PanelDashboard({
       setMessage(error instanceof Error ? error.message : "Upload failed.");
     } finally {
       setUploadingKey("");
-      event.target.value = "";
+      input.value = "";
+    }
+  }
+
+  async function uploadGallery(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    setUploadingKey("gallery");
+    setMessage("");
+    try {
+      const uploaded: GalleryImage[] = [];
+      for (const file of files) {
+        if (!file.type.startsWith("image/")) {
+          throw new Error(`${file.name} is not an image.`);
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error(`${file.name} is larger than 10 MB.`);
+        }
+        const authResponse = await fetch("/api/panel/upload-auth");
+        const auth = await authResponse.json();
+        if (!authResponse.ok) {
+          throw new Error(auth.error || "Upload unavailable.");
+        }
+        const result = await upload({
+          file,
+          fileName: file.name,
+          folder: "/invitation-rudi-gabby/gallery",
+          useUniqueFileName: true,
+          publicKey: auth.publicKey,
+          token: auth.token,
+          signature: auth.signature,
+          expire: auth.expire,
+        });
+        if (!result.url) throw new Error("ImageKit returned no image URL.");
+        uploaded.push({
+          id: result.fileId || crypto.randomUUID(),
+          imageUrl: result.url,
+          imageKitFileId: result.fileId,
+        });
+      }
+      setSettings((current) => ({
+        ...current,
+        gallery:
+          current.gallery.length === 1 &&
+          current.gallery[0]?.id === "default-gallery-1"
+            ? uploaded
+            : [...current.gallery, ...uploaded],
+      }));
+      setMessage(
+        `${uploaded.length} gallery image${uploaded.length === 1 ? "" : "s"} uploaded. Save visuals to publish.`,
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setUploadingKey("");
+      input.value = "";
+    }
+  }
+
+  function removeGalleryImage(id: string) {
+    setSettings((current) => ({
+      ...current,
+      gallery: current.gallery.filter((image) => image.id !== id),
+    }));
+  }
+
+  async function uploadAudio(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("audio/")) {
+      setMessage("Please select an audio file.");
+      input.value = "";
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setMessage("Audio file must be 20 MB or smaller.");
+      input.value = "";
+      return;
+    }
+    setUploadingKey("music");
+    setMessage("");
+    try {
+      const authResponse = await fetch("/api/panel/upload-auth");
+      const auth = await authResponse.json();
+      if (!authResponse.ok) {
+        throw new Error(auth.error || "Upload unavailable.");
+      }
+      const result = await upload({
+        file,
+        fileName: file.name,
+        folder: "/invitation-rudi-gabby/audio",
+        useUniqueFileName: true,
+        publicKey: auth.publicKey,
+        token: auth.token,
+        signature: auth.signature,
+        expire: auth.expire,
+      });
+      if (!result.url) throw new Error("ImageKit returned no audio URL.");
+      updateContent("music", {
+        ...settings.content.music,
+        audioUrl: result.url,
+      });
+      setMessage("Music uploaded. Save changes to publish it.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setUploadingKey("");
+      input.value = "";
     }
   }
 
@@ -383,13 +495,16 @@ export function PanelDashboard({
     if (!invitee.phone) return null;
     const inviteUrl =
       window.location.origin + "/invite/" + encodeURIComponent(invitee.access_token);
-    const couple = settings.content.coupleFormal;
     const text =
-      `Halo ${invitee.full_name}! 👋\n\n` +
-      `Kami dengan penuh kebahagiaan mengundang kamu ke pernikahan ${couple}. 🎊\n\n` +
-      `Silakan buka undangan personalmu melalui link berikut:\n${inviteUrl}\n\n` +
-      `Mohon konfirmasi kehadiran kamu ya. Sampai bertemu di hari spesial kami! 🤍`;
-    const phone = invitee.phone.replace(/[^\d]/g, "");
+      "Dengan hati yang gembira, kami ingin mengajak kamu untuk ikut merayakan hari bahagia kami, pernikahan Rudi & Gabriella! ♡\n\n" +
+      "*Minggu, 11 Oktober 2026*\n\n" +
+      "📍 Sheraton Grand Jakarta Gandaria City Hotel\n\n" +
+      `${inviteUrl}\n\n` +
+      "Jangan lupa konfirmasi kehadiran dan jumlah tamu yang datang lewat link di atas, ya!\n\n" +
+      "Sampai ketemu di hari bahagia kami. Can’t wait to see you there! ♡";
+    let phone = invitee.phone.replace(/[^\d]/g, "");
+    if (phone.startsWith("0")) phone = "62" + phone.slice(1);
+    else if (phone.startsWith("8")) phone = "62" + phone;
     return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
   }
 
@@ -800,6 +915,63 @@ export function PanelDashboard({
                   />
                 </label>
               </article>
+              <article className="panel-card settings-card music-settings-card">
+                <h2>Background music</h2>
+                <p>
+                  Configured for Beautiful Things by Benson Boone. Upload an
+                  audio file you are licensed to use, or paste its direct URL.
+                </p>
+                <label>
+                  <span>Song title</span>
+                  <input
+                    value={settings.content.music.title}
+                    onChange={(event) =>
+                      updateContent("music", {
+                        ...settings.content.music,
+                        title: event.target.value,
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  <span>Artist</span>
+                  <input
+                    value={settings.content.music.artist}
+                    onChange={(event) =>
+                      updateContent("music", {
+                        ...settings.content.music,
+                        artist: event.target.value,
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  <span>Direct audio URL</span>
+                  <input
+                    type="url"
+                    value={settings.content.music.audioUrl}
+                    placeholder="https://.../beautiful-things.mp3"
+                    onChange={(event) =>
+                      updateContent("music", {
+                        ...settings.content.music,
+                        audioUrl: event.target.value,
+                      })
+                    }
+                  />
+                </label>
+                <label className="upload-button music-upload-button">
+                  <Music2 size={15} />
+                  {uploadingKey === "music"
+                    ? "Uploading…"
+                    : "Upload licensed audio with ImageKit"}
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={uploadAudio}
+                    disabled={!imageKitConfigured || Boolean(uploadingKey)}
+                  />
+                </label>
+              </article>
             </div>
           </div>
         )}
@@ -819,6 +991,56 @@ export function PanelDashboard({
                 <Save size={16} /> {saving ? "Saving…" : "Publish visuals"}
               </button>
             </div>
+            <article className="panel-card gallery-manager">
+              <div className="gallery-manager-heading">
+                <div>
+                  <span>Page 11 / 13</span>
+                  <h2>Gallery carousel</h2>
+                  <p>
+                    Upload several images at once. Their order here is the
+                    carousel order on the invitation.
+                  </p>
+                </div>
+                <label className="upload-button gallery-upload-button">
+                  <ImageUp size={16} />
+                  {uploadingKey === "gallery"
+                    ? "Uploading…"
+                    : "Upload multiple images"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={uploadGallery}
+                    disabled={!imageKitConfigured || Boolean(uploadingKey)}
+                  />
+                </label>
+              </div>
+              <div className="gallery-manager-grid">
+                {settings.gallery.map((image, index) => (
+                  <div className="gallery-manager-item" key={image.id}>
+                    <div
+                      style={{ backgroundImage: `url('${image.imageUrl}')` }}
+                      role="img"
+                      aria-label={`Gallery image ${index + 1}`}
+                    />
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryImage(image.id)}
+                      aria-label={`Remove gallery image ${index + 1}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+                {settings.gallery.length === 0 && (
+                  <p className="gallery-manager-empty">
+                    No custom gallery photos yet. The page background remains
+                    as the fallback image.
+                  </p>
+                )}
+              </div>
+            </article>
             <div className="media-grid">
               {settings.media.map((item, index) => (
                 <article className="media-card" key={item.key}>

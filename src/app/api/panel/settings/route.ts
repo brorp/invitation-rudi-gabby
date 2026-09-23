@@ -22,7 +22,11 @@ export async function PUT(request: Request) {
     );
   }
   const body = (await request.json()) as Partial<SiteSettings>;
-  if (!body.content || !Array.isArray(body.media)) {
+  if (
+    !body.content ||
+    !Array.isArray(body.media) ||
+    !Array.isArray(body.gallery)
+  ) {
     return Response.json({ error: "Invalid site settings." }, { status: 400 });
   }
   const { data, error } = await supabase
@@ -31,11 +35,16 @@ export async function PUT(request: Request) {
       id: "main",
       content: body.content,
       media: body.media,
+      gallery: body.gallery,
       updated_at: new Date().toISOString(),
     })
     .select("*")
     .single();
-  if (error) return Response.json({ error: error.message }, { status: 500 });
+  if (error) {
+    const message = error.message.toLowerCase().includes("gallery")
+      ? "Run the latest supabase/schema.sql before saving gallery settings."
+      : error.message;
+    return Response.json({ error: message }, { status: 500 });
+  }
   return Response.json({ settings: data });
 }
-

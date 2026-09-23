@@ -11,11 +11,11 @@ import {
   MapPin,
   Menu,
   Music2,
-  Play,
   Send,
   VolumeX,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import {
   type FormEvent,
   type ReactNode,
@@ -50,6 +50,8 @@ type Countdown = {
   seconds: number;
 };
 
+type Language = "en" | "id";
+
 const SECTION_LINKS = [
   ["intro", "Opening"],
   ["groom", "The Groom"],
@@ -66,11 +68,139 @@ const SECTION_LINKS = [
   ["thanks", "Closing"],
 ] as const;
 
-const ATTENDANCE_OPTIONS = [
-  { value: "both", label: "We'll attend both!" },
-  { value: "holy_matrimony_only", label: "Holy Matrimony only" },
-  { value: "reception_only", label: "Reception only" },
-  { value: "not_attending", label: "Regretfully cannot attend" },
+const ATTENDANCE_OPTIONS = {
+  en: [
+    { value: "both", label: "We'll attend both!" },
+    { value: "holy_matrimony_only", label: "Holy Matrimony only" },
+    { value: "reception_only", label: "Reception only" },
+    { value: "not_attending", label: "Regretfully cannot attend" },
+  ],
+  id: [
+    { value: "both", label: "Hadir pemberkatan & resepsi" },
+    { value: "holy_matrimony_only", label: "Hanya menghadiri pemberkatan" },
+    { value: "reception_only", label: "Hanya menghadiri resepsi" },
+    { value: "not_attending", label: "Mohon maaf, tidak dapat hadir" },
+  ],
+} as const;
+
+const INDONESIAN_COPY = {
+  cover: {
+    dear: "Kepada Yth.",
+    publicGuest: "Tamu Undangan Kami",
+    privateNote: "Mohon maaf jika ada kesalahan penulisan nama",
+    publicNote: "Undangan Pernikahan",
+    open: "Buka undangan",
+  },
+  intro: {
+    eyebrow: "Kami mengundang Anda untuk merayakan",
+    title: "babak baru",
+    titleEmphasis: "kehidupan kami",
+    lines: [
+      "Untuk keluarga & teman-teman tercinta,",
+      "Kalian telah menjadi bagian dari perjalanan cerita kami.",
+      "Kami akan sangat senang jika kalian dapat bersama kami saat kami memulai babak baru dalam kehidupan kami.",
+    ],
+    date: "Minggu, 11 Oktober 2026",
+    scroll: "Geser ke atas",
+  },
+  groom: {
+    label: "Mempelai Pria",
+    familyLabel: "Putra bungsu dari",
+  },
+  bride: {
+    label: "Mempelai Wanita",
+    familyLabel: "Putri sulung dari",
+    parents: "Tommy Dharmawan & Bettris Sutjitro",
+  },
+  journey: {
+    eyebrow: "Awal pertemuan kami",
+    title: "Perjalanan Kita",
+    titleEmphasis: "Menuju Selamanya",
+    items: [
+      {
+        date: "Juli 2013",
+        title: "Begitu Dekat, Tapi Tidak Saling Kenal",
+        body: "Selama dua tahun, kami berjalan di koridor sekolah yang sama — di tempat yang sama, pada waktu yang sama — namun jalan kami tidak pernah bersilangan. Kisah kami ternyata menunggu waktu yang tepat.",
+      },
+      {
+        date: "Mei 2023",
+        title: "Saat Jalan Kami Akhirnya Bertemu",
+        body: "Sepuluh tahun kemudian, media sosial mempertemukan dua orang asing yang sebenarnya sudah saling familiar. Sebuah hubungan pun tumbuh menjadi begitu banyak momen, tantangan, dan akhirnya menjadi rumah.",
+      },
+    ],
+  },
+  events: {
+    title: "Mari Rayakan",
+    titleEmphasis: "Cinta Kami",
+    weekday: "Minggu",
+    monthYear: "Oktober 2026",
+    map: "Lihat peta",
+    items: [
+      {
+        title: "Pemberkatan Pernikahan",
+        time: "10.00 - selesai",
+        venue: "Kapel Hati Kudus Yesus - Biara Ursulin, Jakarta",
+      },
+      {
+        title: "Resepsi",
+        time: "18.00 - selesai",
+        venue: "Sheraton Grand Jakarta Gandaria City Hotel",
+      },
+    ],
+  },
+  countdown: {
+    eyebrow: "Hampir tiba waktunya",
+    title: "Menghitung Mundur",
+    titleEmphasis: "Menuju Selamanya",
+    labels: ["Hari", "Jam", "Menit", "Detik"],
+    save: "Simpan tanggalnya",
+  },
+  dress: {
+    title: "Dress Code",
+    palette: "Palet warna yang disarankan",
+    note: "Formal - warna netral / earth tones",
+    imageAlt: "Inspirasi dress code dengan warna netral dan earth tones",
+  },
+  rsvp: {
+    eyebrow: "Mohon konfirmasi",
+    title: "Konfirmasi",
+    titleEmphasis: "Kehadiran",
+    name: "Nama",
+    attendance: "Kehadiran",
+    pax: "Jumlah yang hadir",
+    confirm: "Konfirmasi Kehadiran",
+    publicTitle: "Informasi pernikahan",
+    publicNote: "RSVP hanya tersedia melalui tautan undangan pribadi.",
+    submitted: "Konfirmasi kehadiran sudah dikirim",
+  },
+  navigation: {
+    intro: "Pembuka",
+    groom: "Mempelai Pria",
+    bride: "Mempelai Wanita",
+    journey: "Perjalanan Kami",
+    events: "Acara Pernikahan",
+    countdown: "Hitung Mundur",
+    dress: "Dress Code",
+    rsvp: "Konfirmasi Kehadiran",
+  },
+} as const;
+
+const ENGLISH_JOURNEY_ITEMS = [
+  {
+    date: "July 2013",
+    title: "So Close, Yet Strangers",
+    body: "For two years, we walked the halls of the same school — in the same place, at the same time — yet our paths never crossed. Our story was waiting for the right time.",
+  },
+  {
+    date: "May 2023",
+    title: "When Our Paths Finally Crossed",
+    body: "Ten years later, social media brought two familiar strangers together. A connection became countless moments, shared challenges, and home.",
+  },
+  {
+    date: "October 2026",
+    title: "Our Forever Begins",
+    body: "Thirteen years after those hallways, we are ready for our greatest adventure yet. Our story together is only beginning.",
+  },
 ] as const;
 
 function backgroundStyle(media: SectionMedia) {
@@ -92,11 +222,13 @@ function InvitationSection({
   media,
   children,
   className = "",
+  backgroundVideoSrc,
 }: {
   sectionKey: string;
   media: SectionMedia;
   children: ReactNode;
   className?: string;
+  backgroundVideoSrc?: string;
 }) {
   return (
     <section
@@ -105,6 +237,20 @@ function InvitationSection({
       className={"invitation-section " + className}
       style={backgroundStyle(media)}
     >
+      {backgroundVideoSrc ? (
+        <video
+          className="section-background-video"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          poster={media.imageUrl}
+          aria-hidden="true"
+        >
+          <source src={backgroundVideoSrc} type="video/mp4" />
+        </video>
+      ) : null}
       <div className="section-vignette" />
       <div className="section-inner">{children}</div>
     </section>
@@ -139,6 +285,7 @@ export function InvitationExperience({
   hasSubmittedWish,
   isPrivate,
 }: Props) {
+  const [language, setLanguage] = useState<Language>("en");
   const [opened, setOpened] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -162,8 +309,29 @@ export function InvitationExperience({
   const [wishSubmitted, setWishSubmitted] = useState(hasSubmittedWish);
   const [copied, setCopied] = useState(false);
   const paneRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const content = settings.content;
-  const guestName = invitee?.full_name || "Our Beloved Guest";
+  const isIndonesian = language === "id";
+  const guestName =
+    invitee?.full_name ||
+    (isIndonesian
+      ? INDONESIAN_COPY.cover.publicGuest
+      : "Our Beloved Guest");
+  const introLines = isIndonesian
+    ? INDONESIAN_COPY.intro.lines
+    : content.intro;
+  const journeyItems = isIndonesian
+    ? INDONESIAN_COPY.journey.items
+    : ENGLISH_JOURNEY_ITEMS;
+  const attendanceOptions = ATTENDANCE_OPTIONS[language];
+  const sectionLinks = SECTION_LINKS.map(([key, label]) => [
+    key,
+    isIndonesian && key in INDONESIAN_COPY.navigation
+      ? INDONESIAN_COPY.navigation[
+          key as keyof typeof INDONESIAN_COPY.navigation
+        ]
+      : label,
+  ] as const);
 
   const mediaMap = useMemo(
     () =>
@@ -179,6 +347,11 @@ export function InvitationExperience({
   );
 
   const activeMedia = media(activeSection);
+  const galleryImages = settings.gallery.length
+    ? settings.gallery
+    : [{ id: "fallback-gallery", imageUrl: media("gallery").imageUrl }];
+  const activeGalleryImage =
+    galleryImages[galleryIndex % galleryImages.length];
 
   useEffect(() => {
     const timer = window.setInterval(
@@ -238,6 +411,26 @@ export function InvitationExperience({
   function openInvitation() {
     setOpened(true);
     window.requestAnimationFrame(() => paneRef.current?.scrollTo({ top: 0 }));
+    if (content.music.audioUrl && audioRef.current) {
+      void audioRef.current
+        .play()
+        .then(() => setMuted(false))
+        .catch(() => setMuted(true));
+    }
+  }
+
+  function toggleMusic() {
+    const audio = audioRef.current;
+    if (!audio || !content.music.audioUrl) return;
+    if (audio.paused) {
+      void audio
+        .play()
+        .then(() => setMuted(false))
+        .catch(() => setMuted(true));
+    } else {
+      audio.pause();
+      setMuted(true);
+    }
   }
 
   function goToSection(key: string) {
@@ -253,7 +446,11 @@ export function InvitationExperience({
   async function submitRsvp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!invitee) return;
-    setRsvpState("Sending your confirmation…");
+    setRsvpState(
+      isIndonesian
+        ? "Mengirim konfirmasi kehadiran…"
+        : "Sending your confirmation…",
+    );
     const form = new FormData(event.currentTarget);
     const response = await fetch("/api/rsvp", {
       method: "POST",
@@ -269,16 +466,22 @@ export function InvitationExperience({
     if (response.ok) setRsvpSubmitted(true);
     setRsvpState(
       response.ok
-        ? "Thank you — your attendance has been confirmed."
-        : result.error || "We could not save your RSVP yet.",
+        ? isIndonesian
+          ? "Terima kasih — kehadiran Anda telah dikonfirmasi."
+          : "Thank you — your attendance has been confirmed."
+        : result.error ||
+            (isIndonesian
+              ? "Konfirmasi kehadiran belum dapat disimpan."
+              : "We could not save your RSVP yet."),
     );
   }
 
   async function submitWish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!invitee) return;
+    const formElement = event.currentTarget;
     setWishState("Posting your wish…");
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const response = await fetch("/api/wishes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -292,7 +495,7 @@ export function InvitationExperience({
     if (response.ok) {
       setWishSubmitted(true);
       setWishState("Your warm wish is now public.");
-      event.currentTarget.reset();
+      formElement.reset();
       setWishes((current) => [result.wish, ...current].slice(0, 5));
       setWishOffset(0);
       setWishTotal((current) => current + 1);
@@ -343,7 +546,10 @@ export function InvitationExperience({
   );
 
   return (
-    <main className={"invitation-shell " + (opened ? "is-open" : "is-closed")}>
+    <main
+      lang={language}
+      className={"invitation-shell " + (opened ? "is-open" : "is-closed")}
+    >
       <aside
         className="desktop-cinema"
         style={backgroundStyle(opened ? activeMedia : media("cover"))}
@@ -356,64 +562,132 @@ export function InvitationExperience({
           <span>G</span>
         </div>
         <div className="desktop-cinema-caption">
-          <p>Eleventh of October · Two Thousand Twenty Six</p>
+          <p>
+            {isIndonesian
+              ? "Sebelas Oktober · Dua Ribu Dua Puluh Enam"
+              : "Eleventh of October · Two Thousand Twenty Six"}
+          </p>
           <h2>{content.coupleFormal}</h2>
         </div>
       </aside>
 
       <div className="story-column">
+        {content.music.audioUrl && (
+          <audio
+            ref={audioRef}
+            src={content.music.audioUrl}
+            loop
+            playsInline
+            preload="metadata"
+          />
+        )}
         {!opened ? (
           <section
             className="invitation-cover"
             style={backgroundStyle(media("cover"))}
           >
             <div className="cover-content">
-              <p className="eyebrow">With joyful hearts, we invite you to</p>
+              <p className="eyebrow cover-intro">With joyful hearts,</p>
               <h1>
-                celebrate
-                <em>the beginning of our forever.</em>
+                <span>We invite you to celebrate</span>
+                <em>The Beginning of Our Forever</em>
               </h1>
               <OrnamentalLine />
               <h2>{content.coupleShort}</h2>
-              <p className="cover-date">{content.weddingDate}</p>
+              <p className="cover-date">
+                {isIndonesian
+                  ? INDONESIAN_COPY.intro.date
+                  : content.weddingDate}
+              </p>
               <div className="guest-card">
-                <span>Dear</span>
+                <span>
+                  {isIndonesian ? INDONESIAN_COPY.cover.dear : "Dear"}
+                </span>
                 <strong>{guestName}</strong>
                 <small>
-                  {isPrivate
-                    ? "We apologize if there's any misspelling of name"
-                    : "Wedding Invitation"}
+                  {isIndonesian
+                    ? isPrivate
+                      ? INDONESIAN_COPY.cover.privateNote
+                      : INDONESIAN_COPY.cover.publicNote
+                    : isPrivate
+                      ? "We apologize if there's any misspelling of name"
+                      : "Wedding Invitation"}
                 </small>
               </div>
+              <div
+                className="language-selector"
+                role="group"
+                aria-label="Language / Bahasa"
+              >
+                <button
+                  type="button"
+                  className={language === "en" ? "active" : ""}
+                  aria-pressed={language === "en"}
+                  onClick={() => setLanguage("en")}
+                >
+                  English
+                </button>
+                <span aria-hidden="true" />
+                <button
+                  type="button"
+                  className={language === "id" ? "active" : ""}
+                  aria-pressed={language === "id"}
+                  onClick={() => setLanguage("id")}
+                >
+                  Bahasa Indonesia
+                </button>
+              </div>
               <button className="pill-button light" onClick={openInvitation}>
-                Open invitation <ChevronUp size={15} />
+                {isIndonesian
+                  ? INDONESIAN_COPY.cover.open
+                  : "Open invitation"}{" "}
+                <ChevronUp size={15} />
               </button>
             </div>
           </section>
         ) : (
           <>
             <div className="story-scroll" ref={paneRef}>
-              <InvitationSection sectionKey="intro" media={media("intro")}>
+              <InvitationSection
+                sectionKey="intro"
+                media={media("intro")}
+                backgroundVideoSrc="/teaser-bg.mp4"
+              >
                 <div className="intro-mark">R · G</div>
-                <p className="eyebrow">We invite you to celebrate</p>
+                <p className="eyebrow">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.intro.eyebrow
+                    : "We invite you to celebrate"}
+                </p>
                 <h2 className="display-title">
-                  our next
-                  <em>chapter</em>
+                  {isIndonesian ? INDONESIAN_COPY.intro.title : "our next"}
+                  <em>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.intro.titleEmphasis
+                      : "chapter"}
+                  </em>
                 </h2>
                 <div className="intro-copy">
-                  {content.intro.map((line) => (
+                  {introLines.map((line) => (
                     <p key={line}>{line}</p>
                   ))}
                 </div>
                 <OrnamentalLine />
                 <h3 className="script-name">{content.coupleFormal}</h3>
-                <p className="date-line">{content.weddingDate}</p>
+                <p className="date-line">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.intro.date
+                    : content.weddingDate}
+                </p>
                 <p className="venue-line">{content.receptionVenue}</p>
                 <button
                   className="scroll-cue"
                   onClick={() => goToSection("groom")}
                 >
-                  Scroll up <ChevronUp size={14} />
+                  {isIndonesian
+                    ? INDONESIAN_COPY.intro.scroll
+                    : "Scroll up"}{" "}
+                  <ChevronUp size={14} />
                 </button>
               </InvitationSection>
 
@@ -422,11 +696,19 @@ export function InvitationExperience({
                 media={media("groom")}
                 className="profile-section align-bottom"
               >
-                <p className="eyebrow tracking">{content.groom.label}</p>
+                <p className="eyebrow tracking">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.groom.label
+                    : content.groom.label}
+                </p>
                 <h2 className="profile-name">{content.groom.nickname}</h2>
                 <p className="formal-name">( {content.groom.fullName} )</p>
                 <div className="profile-family">
-                  <span>{content.groom.familyLabel}</span>
+                  <span>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.groom.familyLabel
+                      : content.groom.familyLabel}
+                  </span>
                   <strong>{content.groom.parents}</strong>
                 </div>
                 <a
@@ -444,12 +726,24 @@ export function InvitationExperience({
                 media={media("bride")}
                 className="profile-section align-bottom"
               >
-                <p className="eyebrow tracking">{content.bride.label}</p>
+                <p className="eyebrow tracking">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.bride.label
+                    : content.bride.label}
+                </p>
                 <h2 className="profile-name">{content.bride.nickname}</h2>
                 <p className="formal-name">( {content.bride.fullName} )</p>
                 <div className="profile-family">
-                  <span>{content.bride.familyLabel}</span>
-                  <strong>{content.bride.parents}</strong>
+                  <span>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.bride.familyLabel
+                      : content.bride.familyLabel}
+                  </span>
+                  <strong>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.bride.parents
+                      : content.bride.parents}
+                  </strong>
                 </div>
                 <a
                   className="social-link"
@@ -466,41 +760,33 @@ export function InvitationExperience({
                 media={media("journey")}
                 className="journey-section"
               >
-                <p className="eyebrow tracking">How it all began</p>
+                <p className="eyebrow tracking">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.journey.eyebrow
+                    : "How it all began"}
+                </p>
                 <h2 className="section-title">
-                  Our Journey
-                  <em>to Forever</em>
+                  {isIndonesian
+                    ? INDONESIAN_COPY.journey.title
+                    : "Our Journey"}
+                  <em>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.journey.titleEmphasis
+                      : "to Forever"}
+                  </em>
                 </h2>
                 <div className="timeline">
-                  <article>
-                    <span>July 2013</span>
-                    <h3>So Close, Yet Strangers</h3>
-                    <p>
-                      For two years, we walked the halls of the same school —
-                      in the same place, at the same time — yet our paths never
-                      crossed. Our story was waiting for the right time.
-                    </p>
-                  </article>
-                  <article>
-                    <span>May 2023</span>
-                    <h3>When Our Paths Finally Crossed</h3>
-                    <p>
-                      Ten years later, social media brought two familiar
-                      strangers together. A connection became countless
-                      moments, shared challenges, and home.
-                    </p>
-                  </article>
-                  <article>
-                    <span>October 2026</span>
-                    <h3>Our Forever Begins</h3>
-                    <p>
-                      Thirteen years after those hallways, we are ready for our
-                      greatest adventure yet. Our story together is only
-                      beginning.
-                    </p>
-                  </article>
+                  {journeyItems.map((item) => (
+                    <article key={item.date}>
+                      <span>{item.date}</span>
+                      <h3>{item.title}</h3>
+                      <p>{item.body}</p>
+                    </article>
+                  ))}
                 </div>
-                <p className="journey-signoff">Here&apos;s to forever.</p>
+                {!isIndonesian && (
+                  <p className="journey-signoff">Here&apos;s to forever.</p>
+                )}
               </InvitationSection>
 
               <InvitationSection
@@ -508,25 +794,51 @@ export function InvitationExperience({
                 media={media("events")}
                 className="events-section"
               >
-                <p className="eyebrow tracking">Save the celebration</p>
+                {!isIndonesian && (
+                  <p className="eyebrow tracking">Save the celebration</p>
+                )}
                 <h2 className="section-title">
-                  Come Celebrate
-                  <em>Our Love</em>
+                  {isIndonesian
+                    ? INDONESIAN_COPY.events.title
+                    : "Come Celebrate"}
+                  <em>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.events.titleEmphasis
+                      : "Our Love"}
+                  </em>
                 </h2>
                 <p className="event-date">
-                  Sunday <b>11</b> October 2026
+                  {isIndonesian
+                    ? INDONESIAN_COPY.events.weekday
+                    : "Sunday"}{" "}
+                  <b>11</b>{" "}
+                  {isIndonesian
+                    ? INDONESIAN_COPY.events.monthYear
+                    : "October 2026"}
                 </p>
                 <div className="event-list">
-                  {content.events.map((event) => (
-                    <article key={event.title}>
-                      <span>{event.title}</span>
-                      <h3>{event.time}</h3>
-                      <p>{event.venue}</p>
-                      <a href={event.mapUrl} target="_blank" rel="noreferrer">
-                        <MapPin size={13} /> Show maps
-                      </a>
-                    </article>
-                  ))}
+                  {content.events.map((event, index) => {
+                    const translatedEvent = isIndonesian
+                      ? INDONESIAN_COPY.events.items[index]
+                      : undefined;
+                    return (
+                      <article key={event.title}>
+                        <span>{translatedEvent?.title || event.title}</span>
+                        <h3>{translatedEvent?.time || event.time}</h3>
+                        <p>{translatedEvent?.venue || event.venue}</p>
+                        <a
+                          href={event.mapUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <MapPin size={13} />
+                          {isIndonesian
+                            ? INDONESIAN_COPY.events.map
+                            : "Show maps"}
+                        </a>
+                      </article>
+                    );
+                  })}
                 </div>
               </InvitationSection>
 
@@ -534,10 +846,20 @@ export function InvitationExperience({
                 sectionKey="countdown"
                 media={media("countdown")}
               >
-                <p className="eyebrow tracking">Almost time</p>
+                <p className="eyebrow tracking">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.countdown.eyebrow
+                    : "Almost time"}
+                </p>
                 <h2 className="section-title">
-                  Counting Down
-                  <em>to Forever</em>
+                  {isIndonesian
+                    ? INDONESIAN_COPY.countdown.title
+                    : "Counting Down"}
+                  <em>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.countdown.titleEmphasis
+                      : "to Forever"}
+                  </em>
                 </h2>
                 <div className="countdown-grid">
                   {(
@@ -547,10 +869,14 @@ export function InvitationExperience({
                       ["Minutes", countdown.minutes],
                       ["Seconds", countdown.seconds],
                     ] as const
-                  ).map(([label, value]) => (
+                  ).map(([label, value], index) => (
                     <div key={label}>
                       <strong>{String(value).padStart(2, "0")}</strong>
-                      <span>{label}</span>
+                      <span>
+                        {isIndonesian
+                          ? INDONESIAN_COPY.countdown.labels[index]
+                          : label}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -560,33 +886,57 @@ export function InvitationExperience({
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <CalendarDays size={15} /> Save the date
+                  <CalendarDays size={15} />
+                  {isIndonesian
+                    ? INDONESIAN_COPY.countdown.save
+                    : "Save the date"}
                 </a>
               </InvitationSection>
 
               <InvitationSection sectionKey="dress" media={media("dress")}>
-                <p className="eyebrow tracking">A note on attire</p>
+                {!isIndonesian && (
+                  <p className="eyebrow tracking">A note on attire</p>
+                )}
                 <h2 className="section-title">
-                  What to
-                  <em>Wear</em>
+                  {isIndonesian ? INDONESIAN_COPY.dress.title : "What to"}
+                  {!isIndonesian && <em>Wear</em>}
                 </h2>
-                <p className="section-copy">
-                  We invite you to dress up and make the evening as beautiful
-                  as the celebration itself.
-                </p>
-                <div className="palette" aria-label="Suggested color palette">
+                {!isIndonesian && (
+                  <p className="section-copy">
+                    We invite you to dress up and make the evening as beautiful
+                    as the celebration itself.
+                  </p>
+                )}
+                <div
+                  className="palette"
+                  aria-label={
+                    isIndonesian
+                      ? INDONESIAN_COPY.dress.palette
+                      : "Suggested color palette"
+                  }
+                >
                   {["#161616", "#5b5751", "#968d81", "#d1c7ba", "#ece6dd"].map(
                     (color) => (
                       <span key={color} style={{ backgroundColor: color }} />
                     ),
                   )}
                 </div>
-                <div className="dress-silhouettes" aria-hidden="true">
-                  <div className="dress-one" />
-                  <div className="dress-two" />
-                </div>
+                <Image
+                  className="dress-code-art"
+                  src="/DRESSCODE.png"
+                  width={1145}
+                  height={1374}
+                  sizes="(max-width: 520px) 78vw, 330px"
+                  alt={
+                    isIndonesian
+                      ? INDONESIAN_COPY.dress.imageAlt
+                      : "Dress code inspiration in neutral and earthy tones"
+                  }
+                />
                 <p className="tiny-note">
-                  Formal evening attire · neutral and earthy tones
+                  {isIndonesian
+                    ? INDONESIAN_COPY.dress.note
+                    : "Formal evening attire · neutral and earthy tones"}
                 </p>
               </InvitationSection>
 
@@ -595,23 +945,41 @@ export function InvitationExperience({
                 media={media("rsvp")}
                 className="form-section"
               >
-                <p className="eyebrow tracking">Kindly reply</p>
+                <p className="eyebrow tracking">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.rsvp.eyebrow
+                    : "Kindly reply"}
+                </p>
                 <h2 className="section-title">
-                  Attendance
-                  <em>Confirmation</em>
+                  {isIndonesian
+                    ? INDONESIAN_COPY.rsvp.title
+                    : "Attendance"}
+                  <em>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.rsvp.titleEmphasis
+                      : "Confirmation"}
+                  </em>
                 </h2>
                 {!isPrivate ? (
                   <div className="submitted-form-state public-information-state">
                     <CalendarDays size={20} />
-                    <strong>Wedding information</strong>
+                    <strong>
+                      {isIndonesian
+                        ? INDONESIAN_COPY.rsvp.publicTitle
+                        : "Wedding information"}
+                    </strong>
                     <span>
-                      RSVP is available only through a personal invitation link.
+                      {isIndonesian
+                        ? INDONESIAN_COPY.rsvp.publicNote
+                        : "RSVP is available only through a personal invitation link."}
                     </span>
                   </div>
                 ) : !rsvpSubmitted ? (
                 <form onSubmit={submitRsvp} className="invitation-form">
                   <label>
-                    <span>Name</span>
+                    <span>
+                      {isIndonesian ? INDONESIAN_COPY.rsvp.name : "Name"}
+                    </span>
                     <input
                       name="guestName"
                       defaultValue={guestName}
@@ -620,13 +988,19 @@ export function InvitationExperience({
                     />
                   </label>
                   <div className="attendance-picker-group">
-                    <span className="picker-label">Attendance</span>
+                    <span className="picker-label">
+                      {isIndonesian
+                        ? INDONESIAN_COPY.rsvp.attendance
+                        : "Attendance"}
+                    </span>
                     <div
                       className="attendance-options-list"
                       role="radiogroup"
-                      aria-label="Attendance status"
+                      aria-label={
+                        isIndonesian ? "Status kehadiran" : "Attendance status"
+                      }
                     >
-                      {ATTENDANCE_OPTIONS.map((option) => {
+                      {attendanceOptions.map((option) => {
                         const isSelected = attendanceStatus === option.value;
                         return (
                           <label
@@ -655,34 +1029,47 @@ export function InvitationExperience({
                   </div>
                   {attendanceStatus !== "not_attending" && (
                     <label>
-                      <span>How many will attend</span>
+                      <span>
+                        {isIndonesian
+                          ? INDONESIAN_COPY.rsvp.pax
+                          : "How many will attend"}
+                      </span>
                       <select
                         name="paxAttending"
-                        defaultValue={invitee?.pax_attending || 1}
+                        defaultValue={
+                          invitee?.pax_attending || invitee?.pax_allowed || 1
+                        }
                       >
                         {Array.from(
-                          { length: invitee?.pax_allowed || 2 },
+                          { length: invitee?.pax_allowed || 1 },
                           (_, index) => index + 1,
                         ).map((pax) => (
                           <option value={pax} key={pax}>
-                            {pax} pax
+                            {pax} {isIndonesian ? "orang" : "pax"}
                           </option>
                         ))}
                       </select>
                     </label>
                   )}
                   <button className="solid-button" type="submit">
-                    Confirm attendance <Check size={15} />
+                    {isIndonesian
+                      ? INDONESIAN_COPY.rsvp.confirm
+                      : "Confirm attendance"}{" "}
+                    <Check size={15} />
                   </button>
                   {rsvpState && <p className="form-state">{rsvpState}</p>}
                 </form>
                 ) : (
                   <div className="submitted-form-state">
                     <Check size={20} />
-                    <strong>RSVP already submitted</strong>
+                    <strong>
+                      {isIndonesian
+                        ? INDONESIAN_COPY.rsvp.submitted
+                        : "RSVP already submitted"}
+                    </strong>
                     <span>
                       {rsvpState ||
-                        `Status: ${invitee?.status} · ${invitee?.pax_attending || 0} pax`}
+                        `Status: ${invitee?.status} · ${invitee?.pax_attending || 0} ${isIndonesian ? "orang" : "pax"}`}
                     </span>
                   </div>
                 )}
@@ -800,53 +1187,66 @@ export function InvitationExperience({
                 </h2>
                 <div className="gallery-frame">
                   <div
-                    className={
-                      "gallery-placeholder gallery-position-" +
-                      (galleryIndex % 3)
-                    }
+                    className="gallery-placeholder"
                     style={{
-                      backgroundImage:
-                        "url('" + media("gallery").imageUrl + "')",
+                      backgroundImage: "url('" + activeGalleryImage.imageUrl + "')",
                     }}
                     role="img"
                     aria-label={"Pre-wedding image " + (galleryIndex + 1)}
                   />
-                  <span>{String(galleryIndex + 1).padStart(2, "0")} / 11</span>
+                  <span>
+                    {String((galleryIndex % galleryImages.length) + 1).padStart(2, "0")} /{" "}
+                    {String(galleryImages.length).padStart(2, "0")}
+                  </span>
                 </div>
                 <div className="gallery-controls">
                   <button
                     aria-label="Previous image"
                     onClick={() =>
-                      setGalleryIndex((current) => (current + 10) % 11)
+                      setGalleryIndex(
+                        (current) =>
+                          (current - 1 + galleryImages.length) % galleryImages.length,
+                      )
                     }
+                    disabled={galleryImages.length <= 1}
                   >
                     <ArrowLeft size={17} />
                   </button>
-                  <p>Click image for preview</p>
+                  <p>Browse our memories</p>
                   <button
                     aria-label="Next image"
                     onClick={() =>
-                      setGalleryIndex((current) => (current + 1) % 11)
+                      setGalleryIndex(
+                        (current) => (current + 1) % galleryImages.length,
+                      )
                     }
+                    disabled={galleryImages.length <= 1}
                   >
                     <ArrowRight size={17} />
                   </button>
                 </div>
               </InvitationSection>
 
-              <InvitationSection sectionKey="video" media={media("video")}>
+              <InvitationSection
+                sectionKey="video"
+                media={media("video")}
+                className="video-section"
+              >
                 <p className="eyebrow tracking">From the island of gods</p>
                 <h2 className="section-title">
                   Our Pre-Wedding
                   <em>Video in Bali</em>
                 </h2>
-                <button className="video-play" aria-label="Play video">
-                  <Play size={24} fill="currentColor" />
-                </button>
-                <p className="section-copy">
-                  The film will be added here soon. This section is ready for a
-                  video URL from the panel.
-                </p>
+                <div className="youtube-embed">
+                  <iframe
+                    src="https://www.youtube.com/embed/szlhyb0xmCI?si=4toL31284nZNow6d"
+                    title="Rudi and Gabriella pre-wedding video in Bali"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                    loading="lazy"
+                  />
+                </div>
               </InvitationSection>
 
               <InvitationSection
@@ -881,7 +1281,11 @@ export function InvitationExperience({
             <div className="floating-controls">
               <button
                 onClick={() => setMenuOpen(true)}
-                aria-label="Open invitation navigation"
+                aria-label={
+                  isIndonesian
+                    ? "Buka navigasi undangan"
+                    : "Open invitation navigation"
+                }
               >
                 <Menu size={18} />
               </button>
@@ -890,8 +1294,22 @@ export function InvitationExperience({
                 {String(SECTION_LINKS.length).padStart(2, "0")}
               </span>
               <button
-                onClick={() => setMuted((value) => !value)}
-                aria-label={muted ? "Turn music on" : "Mute music"}
+                onClick={toggleMusic}
+                aria-label={
+                  isIndonesian
+                    ? muted
+                      ? "Nyalakan musik"
+                      : "Jeda musik"
+                    : muted
+                      ? "Turn music on"
+                      : "Pause music"
+                }
+                title={
+                  content.music.audioUrl
+                    ? `${content.music.title} — ${content.music.artist}`
+                    : "Background music file is not configured"
+                }
+                disabled={!content.music.audioUrl}
               >
                 {muted ? <VolumeX size={17} /> : <Music2 size={17} />}
               </button>
@@ -902,13 +1320,17 @@ export function InvitationExperience({
                 <button
                   className="menu-close"
                   onClick={() => setMenuOpen(false)}
-                  aria-label="Close menu"
+                  aria-label={isIndonesian ? "Tutup menu" : "Close menu"}
                 >
                   <X size={20} />
                 </button>
-                <p>Navigate the invitation</p>
+                <p>
+                  {isIndonesian
+                    ? "Navigasi undangan"
+                    : "Navigate the invitation"}
+                </p>
                 <nav>
-                  {SECTION_LINKS.map(([key, label], index) => (
+                  {sectionLinks.map(([key, label], index) => (
                     <button
                       key={key}
                       className={activeSection === key ? "active" : ""}

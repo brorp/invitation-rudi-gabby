@@ -73,7 +73,18 @@ export type SiteContent = {
     accountNumber: string;
     accountName: string;
   };
+  music: {
+    title: string;
+    artist: string;
+    audioUrl: string;
+  };
   footerCredit: string;
+};
+
+export type GalleryImage = {
+  id: string;
+  imageUrl: string;
+  imageKitFileId?: string;
 };
 
 export type SectionMedia = {
@@ -88,5 +99,6 @@ export type SiteSettings = {
   id: string;
   content: SiteContent;
   media: SectionMedia[];
+  gallery: GalleryImage[];
   updated_at?: string;
 };

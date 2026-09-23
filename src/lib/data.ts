@@ -18,19 +18,47 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return DEFAULT_SITE_SETTINGS;
 
-  const { data, error } = await supabase
+  const currentResult = await supabase
     .from("site_settings")
-    .select("id, content, media, updated_at")
+    .select("id, content, media, gallery, updated_at")
     .eq("id", "main")
     .maybeSingle();
+
+  let data = currentResult.data;
+  let error = currentResult.error;
+
+  if (error?.message.toLowerCase().includes("gallery")) {
+    const legacyResult = await supabase
+      .from("site_settings")
+      .select("id, content, media, updated_at")
+      .eq("id", "main")
+      .maybeSingle();
+    data = legacyResult.data
+      ? { ...legacyResult.data, gallery: DEFAULT_SITE_SETTINGS.gallery }
+      : null;
+    error = legacyResult.error;
+  }
 
   if (error || !data) return DEFAULT_SITE_SETTINGS;
 
   return {
     ...DEFAULT_SITE_SETTINGS,
     ...data,
-    content: { ...DEFAULT_SITE_SETTINGS.content, ...data.content },
+    content: {
+      ...DEFAULT_SITE_SETTINGS.content,
+      ...data.content,
+      music: {
+        ...DEFAULT_SITE_SETTINGS.content.music,
+        ...(data.content?.music || {}),
+        audioUrl:
+          data.content?.music?.audioUrl ||
+          DEFAULT_SITE_SETTINGS.content.music.audioUrl,
+      },
+    },
     media: Array.isArray(data.media) ? data.media : DEFAULT_SITE_SETTINGS.media,
+    gallery: Array.isArray(data.gallery)
+      ? data.gallery
+      : DEFAULT_SITE_SETTINGS.gallery,
   } as SiteSettings;
 }
 

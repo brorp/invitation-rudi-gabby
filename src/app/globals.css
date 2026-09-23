@@ -191,16 +191,23 @@ button {
 .cover-content h1 {
   margin: 0;
   font-family: var(--serif);
-  font-size: 46px;
+  font-size: 24px;
   font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 0.82;
-  text-transform: capitalize;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+}
+
+.cover-content .cover-intro {
+  margin-bottom: 8px;
+}
+
+.cover-content h1 span {
+  display: block;
 }
 
 .cover-content h1 em {
   display: block;
-  margin-top: 13px;
+  margin-top: 8px;
   font-size: 19px;
   font-weight: 400;
   line-height: 1;
@@ -245,7 +252,7 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 72px 0 20px;
+  margin: 52px 0 14px;
 }
 
 .guest-card span {
@@ -263,6 +270,44 @@ button {
 .guest-card small {
   color: rgba(255, 255, 255, 0.76);
   font-size: 9px;
+}
+
+.language-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 99px;
+  padding: 3px;
+  background: rgba(13, 13, 13, 0.32);
+  backdrop-filter: blur(8px);
+}
+
+.language-selector button {
+  min-height: 27px;
+  border: 0;
+  border-radius: 99px;
+  background: transparent;
+  padding: 0 10px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.language-selector button.active {
+  background: rgba(245, 242, 236, 0.92);
+  color: #2a2927;
+}
+
+.language-selector > span {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .pill-button,
@@ -317,9 +362,23 @@ button {
   will-change: background-position;
 }
 
+.section-background-video {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.invitation-section .section-vignette {
+  z-index: 1;
+}
+
 .section-inner {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   width: 100%;
   min-height: 100svh;
@@ -552,8 +611,12 @@ button {
   place-items: center;
   border: 1px solid rgba(255, 255, 255, 0.64);
   border-radius: 50%;
-  font-size: 24px;
+  font-family: var(--sans);
+  font-size: 21px;
+  font-style: normal;
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
 }
 
 .event-list {
@@ -681,6 +744,16 @@ button {
   background: rgba(255, 255, 255, 0.1);
 }
 
+.dress-code-art {
+  display: block;
+  width: min(100%, 290px);
+  height: auto;
+  max-height: 260px;
+  margin: 12px auto 2px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
 .dress-two {
   width: 64px;
   height: 137px;
@@ -689,7 +762,7 @@ button {
 }
 
 .tiny-note {
-  margin-top: 20px;
+  margin-top: 10px;
   font-size: 7px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -983,7 +1056,9 @@ button {
   cursor: pointer;
 }
 
-.wish-arrows button:disabled {
+.wish-arrows button:disabled,
+.gallery-controls button:disabled,
+.floating-controls button:disabled {
   cursor: not-allowed;
   opacity: 0.32;
 }
@@ -1085,16 +1160,22 @@ button {
   font-style: italic;
 }
 
-.video-play {
-  display: grid;
-  width: 82px;
-  height: 82px;
-  margin: 44px 0 15px;
-  place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.18);
-  cursor: pointer;
+.youtube-embed {
+  width: 100%;
+  margin-top: 34px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 3px;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.3);
+}
+
+.youtube-embed iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .closing-copy {
@@ -1245,6 +1326,10 @@ button {
 }
 
 @media (max-height: 710px) and (min-width: 350px) {
+  .guest-card {
+    margin-top: 32px;
+  }
+
   .section-inner {
     padding-top: 46px;
     padding-bottom: 60px;
@@ -2069,6 +2154,18 @@ button {
   margin-bottom: 3px;
 }
 
+.settings-card > p,
+.gallery-manager-heading p {
+  margin: 0;
+  color: #837c73;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.music-settings-card {
+  grid-column: 1 / -1;
+}
+
 .settings-card label,
 .panel-modal label {
   display: grid;
@@ -2100,6 +2197,108 @@ button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 13px;
+}
+
+.gallery-manager {
+  margin-bottom: 14px;
+}
+
+.gallery-manager-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.gallery-manager-heading > div > span {
+  color: #9a8a76;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.gallery-manager-heading h2 {
+  margin: 3px 0 5px;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.gallery-upload-button {
+  min-width: 180px;
+  padding: 0 14px;
+}
+
+.gallery-manager-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.gallery-manager-item {
+  position: relative;
+  overflow: hidden;
+  min-height: 120px;
+  border-radius: 9px;
+  background: #ebe7e1;
+}
+
+.gallery-manager-item > div {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.gallery-manager-item::after {
+  position: absolute;
+  inset: 55% 0 0;
+  content: "";
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.62));
+  pointer-events: none;
+}
+
+.gallery-manager-item > span {
+  position: absolute;
+  z-index: 1;
+  bottom: 8px;
+  left: 9px;
+  color: #fff;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.gallery-manager-item > button {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  width: 29px;
+  height: 29px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(20, 19, 17, 0.75);
+  color: #fff;
+  cursor: pointer;
+}
+
+.gallery-manager-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  border: 1px dashed #d6d0c7;
+  border-radius: 9px;
+  padding: 22px;
+  color: #8a8379;
+  font-size: 9px;
+  text-align: center;
+}
+
+.music-upload-button {
+  margin-top: 2px;
 }
 
 .media-card {
@@ -2358,6 +2557,10 @@ button {
   .media-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .gallery-manager-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -2421,6 +2624,15 @@ button {
 
   .media-grid {
     grid-template-columns: 1fr;
+  }
+
+  .gallery-manager-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gallery-manager-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

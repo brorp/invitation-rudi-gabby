@@ -27,7 +27,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       nickname: "Gabby",
       fullName: "Gabriella Dharmawan",
       familyLabel: "The Oldest Daughter of",
-      parents: "Tommy Dharmawan & Bettris",
+      parents: "Tommy Dharmawan & Bettris Sutjitro",
       instagram: "gabrielladharmawan",
     },
     events: [
@@ -51,6 +51,11 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       accountNumber: "7130811773",
       accountName: "Rudi Sukarto",
     },
+    music: {
+      title: "Beautiful Things",
+      artist: "Benson Boone",
+      audioUrl: "/beautiful-things-benson-boone.mp3",
+    },
     footerCredit: "Ryan Pratama",
   },
   media: [
@@ -69,6 +74,12 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     { key: "video", label: "Pre-wedding Video", imageUrl: "/placeholders/editorial-10.svg", overlay: 0.52 },
     { key: "thanks", label: "Closing", imageUrl: "/placeholders/editorial-09.svg", overlay: 0.54 },
   ],
+  gallery: [
+    {
+      id: "default-gallery-1",
+      imageUrl: "/placeholders/editorial-09.svg",
+    },
+  ],
 };
 
 export function getSectionMedia(settings: SiteSettings, key: string) {
@@ -78,4 +89,3 @@ export function getSectionMedia(settings: SiteSettings, key: string) {
     DEFAULT_SITE_SETTINGS.media[0]
   );
 }
-
