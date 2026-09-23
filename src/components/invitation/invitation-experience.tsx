@@ -8,10 +8,10 @@ import {
   Check,
   ChevronUp,
   Copy,
-  ExternalLink,
   MapPin,
   Menu,
   Music2,
+  Play,
   Send,
   VolumeX,
   X,
@@ -290,6 +290,7 @@ export function InvitationExperience({
   const [opened, setOpened] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [videoStarted, setVideoStarted] = useState(false);
   const [activeSection, setActiveSection] = useState("intro");
   const [countdown, setCountdown] = useState(() =>
     calculateCountdown(settings.content.weddingDateIso),
@@ -432,6 +433,12 @@ export function InvitationExperience({
       audio.pause();
       setMuted(true);
     }
+  }
+
+  function playWeddingVideo() {
+    audioRef.current?.pause();
+    setMuted(true);
+    setVideoStarted(true);
   }
 
   function goToSection(key: string) {
@@ -1239,29 +1246,28 @@ export function InvitationExperience({
                   <em>Video in Bali</em>
                 </h2>
                 <div className="video-card">
-                  <div className="video-card-meta" aria-hidden="true">
-                    <span>R · G</span>
-                    <i />
-                    <span>Bali, Indonesia</span>
-                  </div>
                   <div className="youtube-embed">
-                    <iframe
-                      src="https://www.youtube.com/embed/szlhyb0xmCI?si=4toL31284nZNow6d&rel=0&playsinline=1"
-                      title="Rudi and Gabriella pre-wedding video in Bali"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                      allowFullScreen
-                      loading="lazy"
-                    />
+                    {videoStarted ? (
+                      <iframe
+                        src="https://www.youtube.com/embed/szlhyb0xmCI?si=4toL31284nZNow6d&autoplay=1&rel=0&playsinline=1&controls=1&fs=1"
+                        title="Rudi and Gabriella pre-wedding video in Bali"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        className="video-poster"
+                        onClick={playWeddingVideo}
+                        aria-label="Play Rudi and Gabriella pre-wedding video"
+                      >
+                        <span>
+                          <Play size={25} fill="currentColor" />
+                        </span>
+                      </button>
+                    )}
                   </div>
-                  <a
-                    className="video-watch-link"
-                    href="https://www.youtube.com/watch?v=szlhyb0xmCI"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Watch on YouTube <ExternalLink size={11} />
-                  </a>
                 </div>
               </InvitationSection>
 

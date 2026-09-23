@@ -1167,8 +1167,8 @@ button {
 }
 
 .video-section .section-inner {
-  padding-right: 32px;
-  padding-left: 32px;
+  padding-right: 14px;
+  padding-left: 14px;
 }
 
 .video-section .eyebrow {
@@ -1186,37 +1186,18 @@ button {
 
 .video-card {
   width: 100%;
-  max-width: 376px;
-  margin-top: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  border-radius: 16px;
-  padding: 8px;
-  background: rgba(10, 11, 11, 0.58);
+  margin-top: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 12px;
+  background: #000;
   box-shadow: 0 22px 55px rgba(0, 0, 0, 0.42);
-  backdrop-filter: blur(10px);
-}
-
-.video-card-meta {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 3px 4px 10px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 7px;
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-}
-
-.video-card-meta i {
-  height: 1px;
-  flex: 1;
-  background: rgba(255, 255, 255, 0.19);
 }
 
 .youtube-embed {
+  position: relative;
   width: 100%;
   overflow: hidden;
-  border-radius: 10px;
   aspect-ratio: 16 / 9;
   background: #000;
 }
@@ -1228,23 +1209,37 @@ button {
   border: 0;
 }
 
-.video-watch-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 9px;
-  padding: 2px 4px 1px;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 7px;
-  letter-spacing: 0.16em;
-  text-decoration: none;
-  text-transform: uppercase;
-  transition: color 180ms ease;
+.video-poster {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  border: 0;
+  background:
+    linear-gradient(rgba(5, 5, 5, 0.12), rgba(5, 5, 5, 0.34)),
+    url("https://i.ytimg.com/vi/szlhyb0xmCI/maxresdefault.jpg") center / cover no-repeat;
+  color: #fff;
+  cursor: pointer;
 }
 
-.video-watch-link:hover {
-  color: #fff;
+.video-poster span {
+  display: grid;
+  width: 66px;
+  height: 66px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 50%;
+  background: rgba(10, 10, 10, 0.62);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.36);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.video-poster:hover span,
+.video-poster:focus-visible span {
+  background: rgba(10, 10, 10, 0.82);
+  transform: scale(1.06);
 }
 
 .closing-copy {

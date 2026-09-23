@@ -75,7 +75,7 @@ function whatsappInvitationMessage(inviteUrl: string) {
   return [
     "Dengan hati yang gembira, kami ingin mengajak kamu untuk ikut merayakan hari bahagia kami, pernikahan Rudi & Gabriella! ♡",
     "*Minggu, 11 Oktober 2026*",
-    "📍 Sheraton Grand Jakarta Gandaria City Hotel",
+    "Venue: Sheraton Grand Jakarta Gandaria City Hotel",
     inviteUrl,
     "Jangan lupa konfirmasi kehadiran dan jumlah tamu yang datang lewat link di atas, ya!",
     "Sampai ketemu di hari bahagia kami. Can’t wait to see you there! ♡",
