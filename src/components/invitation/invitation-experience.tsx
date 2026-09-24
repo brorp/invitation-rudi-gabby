@@ -7,7 +7,6 @@ import {
   CalendarDays,
   Check,
   ChevronUp,
-  Copy,
   MapPin,
   Menu,
   Music2,
@@ -65,7 +64,6 @@ const SECTION_LINKS = [
   ["dress", "Dress Code"],
   ["rsvp", "RSVP"],
   ["wishes", "Wishes"],
-  ["gift", "Wedding Gift"],
   ["gallery", "Gallery"],
   ["video", "Video"],
   ["thanks", "Closing"],
@@ -96,7 +94,6 @@ const LOCAL_BACKGROUND_BY_SECTION: Record<string, string> = {
   dress: "/background/optimized/dresscode.jpg",
   rsvp: "/background/optimized/rsvp.jpg",
   wishes: "/background/optimized/wishes.jpg",
-  gift: "/background/optimized/wedding-gift.jpg",
   gallery: "/background/optimized/gallery.jpg",
   video: "/background/optimized/pre-wedding-video.jpg",
   thanks: "/background/optimized/closing.jpg",
@@ -127,8 +124,8 @@ const INDONESIAN_COPY = {
   },
   intro: {
     eyebrow: "Kami mengundang Anda untuk merayakan",
-    title: "babak baru",
-    titleEmphasis: "kehidupan kami",
+    title: "Babak Baru",
+    titleEmphasis: "Kehidupan Kami",
     lines: [
       "Untuk keluarga & teman-teman tercinta,",
       "Kalian telah menjadi bagian dari perjalanan cerita kami.",
@@ -207,6 +204,48 @@ const INDONESIAN_COPY = {
     publicNote: "RSVP hanya tersedia melalui tautan undangan pribadi.",
     submitted: "Konfirmasi kehadiran sudah dikirim",
   },
+  wishes: {
+    eyebrow: "Sebuah pesan darimu",
+    title: "Doa",
+    titleEmphasis: "& Ucapan",
+    namePlaceholder: "Gabriella Dharmawan & Partner",
+    messagePlaceholder:
+      "Tuliskan doa, harapan, dan ucapan hangatmu untuk kami...",
+    submit: "Kirim Ucapan",
+    submittedTitle: "Ucapanmu telah kami terima",
+    submittedNote: "Setiap undangan dapat mengirim satu ucapan.",
+    pagesLabel: "Halaman ucapan",
+    previous: "Lima ucapan sebelumnya",
+    next: "Lima ucapan berikutnya",
+  },
+  gallery: {
+    eyebrow: "Dari Seoul",
+    title: "Galeri pre-wedding",
+    titleEmphasis: "kami",
+    browse: "Geser untuk melihat",
+    previous: "Foto sebelumnya",
+    next: "Foto berikutnya",
+    imageAlt: "Foto pre-wedding",
+  },
+  video: {
+    eyebrow: "Dari Pulau Dewata",
+    title: "Pre-wedding teaser",
+    titleEmphasis: "kami",
+    playLabel: "Putar video pre-wedding Rudi dan Gabriella",
+    controlsLabel: "Kontrol video",
+    play: "Putar",
+    pause: "Jeda",
+    stop: "Hentikan",
+  },
+  thanks: {
+    eyebrow: "Dari Hati Kami",
+    title: "Dengan Cinta",
+    titleEmphasis: "& Rasa Syukur",
+    paragraphs: [
+      "Kehadiranmu bersama kami di hari istimewa ini merupakan sebuah kehormatan dan kebahagiaan bagi kami.",
+      "Kami tak sabar untuk merayakan momen indah ini bersamamu.",
+    ],
+  },
   navigation: {
     intro: "Pembuka",
     groom: "Mempelai Pria",
@@ -216,6 +255,10 @@ const INDONESIAN_COPY = {
     countdown: "Hitung Mundur",
     dress: "Dress Code",
     rsvp: "Konfirmasi Kehadiran",
+    wishes: "Doa & Ucapan",
+    gallery: "Galeri",
+    video: "Video",
+    thanks: "Penutup",
   },
 } as const;
 
@@ -342,7 +385,6 @@ export function InvitationExperience({
     (invitee?.status || "pending") !== "pending",
   );
   const [wishSubmitted, setWishSubmitted] = useState(hasSubmittedWish);
-  const [copied, setCopied] = useState(false);
   const paneRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const youtubeFrameRef = useRef<HTMLIFrameElement>(null);
@@ -553,7 +595,7 @@ export function InvitationExperience({
     event.preventDefault();
     if (!invitee) return;
     const formElement = event.currentTarget;
-    setWishState("Posting your wish…");
+    setWishState(isIndonesian ? "Mengirim ucapanmu…" : "Posting your wish…");
     const form = new FormData(formElement);
     const response = await fetch("/api/wishes", {
       method: "POST",
@@ -567,13 +609,22 @@ export function InvitationExperience({
     const result = await response.json().catch(() => ({}));
     if (response.ok) {
       setWishSubmitted(true);
-      setWishState("Your warm wish is now public.");
+      setWishState(
+        isIndonesian
+          ? "Ucapan hangatmu sekarang sudah ditampilkan."
+          : "Your warm wish is now public.",
+      );
       formElement.reset();
       setWishes((current) => [result.wish, ...current].slice(0, 5));
       setWishOffset(0);
       setWishTotal((current) => current + 1);
     } else {
-      setWishState(result.error || "We could not post your wish yet.");
+      setWishState(
+        result.error ||
+          (isIndonesian
+            ? "Ucapanmu belum dapat dikirim."
+            : "We could not post your wish yet."),
+      );
     }
   }
 
@@ -593,16 +644,14 @@ export function InvitationExperience({
       setWishTotal(result.count || 0);
       setWishOffset(boundedOffset);
     } catch {
-      setWishState("We could not load more wishes yet.");
+      setWishState(
+        isIndonesian
+          ? "Ucapan lainnya belum dapat dimuat."
+          : "We could not load more wishes yet.",
+      );
     } finally {
       setWishesLoading(false);
     }
-  }
-
-  async function copyAccount() {
-    await navigator.clipboard.writeText(content.bank.accountNumber);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
   }
 
   const calendarUrl =
@@ -1151,36 +1200,64 @@ export function InvitationExperience({
                 media={media("wishes")}
                 className="form-section wishes-section"
               >
-                <p className="eyebrow tracking">A note from you</p>
+                <p className="eyebrow tracking">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.wishes.eyebrow
+                    : "A note from you"}
+                </p>
                 <h2 className="section-title">
-                  Prayer
-                  <em>& Wishes</em>
+                  {isIndonesian ? INDONESIAN_COPY.wishes.title : "Prayer"}
+                  <em>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.wishes.titleEmphasis
+                      : "& Wishes"}
+                  </em>
                 </h2>
                 {isPrivate && (!wishSubmitted ? (
                 <form onSubmit={submitWish} className="invitation-form compact">
                   <input
                     name="guestName"
                     defaultValue={guestName}
-                    aria-label="Your name"
+                    placeholder={
+                      isIndonesian
+                        ? INDONESIAN_COPY.wishes.namePlaceholder
+                        : "Your name"
+                    }
+                    aria-label={isIndonesian ? "Nama" : "Your name"}
                     required
                   />
                   <textarea
                     name="message"
                     rows={3}
                     maxLength={500}
-                    placeholder="Write your warm wishes…"
+                    placeholder={
+                      isIndonesian
+                        ? INDONESIAN_COPY.wishes.messagePlaceholder
+                        : "Write your warm wishes…"
+                    }
                     required
                   />
                   <button className="outline-button" type="submit">
-                    Post wish <Send size={14} />
+                    {isIndonesian
+                      ? INDONESIAN_COPY.wishes.submit
+                      : "Post wish"}{" "}
+                    <Send size={14} />
                   </button>
                   {wishState && <p className="form-state">{wishState}</p>}
                 </form>
                 ) : (
                   <div className="submitted-form-state compact-state">
                     <Check size={18} />
-                    <strong>Your wish has been received</strong>
-                    <span>One wish is accepted for each invitation.</span>
+                    <strong>
+                      {isIndonesian
+                        ? INDONESIAN_COPY.wishes.submittedTitle
+                        : "Your wish has been received"}
+                    </strong>
+                    <span>
+                      {isIndonesian
+                        ? INDONESIAN_COPY.wishes.submittedNote
+                        : "One wish is accepted for each invitation."}
+                    </span>
                   </div>
                 ))}
                 <div className="wish-list">
@@ -1200,10 +1277,21 @@ export function InvitationExperience({
                     </article>
                   ))}
                 </div>
-                <div className="wish-arrows" aria-label="Wish pages">
+                <div
+                  className="wish-arrows"
+                  aria-label={
+                    isIndonesian
+                      ? INDONESIAN_COPY.wishes.pagesLabel
+                      : "Wish pages"
+                  }
+                >
                   <button
                     type="button"
-                    aria-label="Previous five wishes"
+                    aria-label={
+                      isIndonesian
+                        ? INDONESIAN_COPY.wishes.previous
+                        : "Previous five wishes"
+                    }
                     onClick={() => loadWishPage(wishOffset - 5)}
                     disabled={wishOffset === 0 || wishesLoading}
                   >
@@ -1214,7 +1302,11 @@ export function InvitationExperience({
                   </span>
                   <button
                     type="button"
-                    aria-label="Next five wishes"
+                    aria-label={
+                      isIndonesian
+                        ? INDONESIAN_COPY.wishes.next
+                        : "Next five wishes"
+                    }
                     onClick={() => loadWishPage(wishOffset + 5)}
                     disabled={
                       wishesLoading || wishOffset + wishes.length >= wishTotal
@@ -1225,36 +1317,25 @@ export function InvitationExperience({
                 </div>
               </InvitationSection>
 
-              <InvitationSection sectionKey="gift" media={media("gift")}>
-                <p className="eyebrow tracking">With gratitude</p>
-                <h2 className="section-title">
-                  Your Thoughtfulness
-                  <em>Means Everything</em>
-                </h2>
-                <p className="section-copy">
-                  For those who would like to send a token of love, you may use
-                  the account below.
-                </p>
-                <div className="bank-card">
-                  <span>{content.bank.bankName}</span>
-                  <strong>{content.bank.accountNumber}</strong>
-                  <p>{content.bank.accountName}</p>
-                  <button onClick={copyAccount}>
-                    {copied ? <Check size={14} /> : <Copy size={14} />}
-                    {copied ? "Copied" : "Copy number"}
-                  </button>
-                </div>
-              </InvitationSection>
-
               <InvitationSection
                 sectionKey="gallery"
                 media={media("gallery")}
                 className="gallery-section"
               >
-                <p className="eyebrow tracking">Frames from Seoul</p>
+                <p className="eyebrow tracking">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.gallery.eyebrow
+                    : "Frames from Seoul"}
+                </p>
                 <h2 className="section-title">
-                  Our Pre-Wedding
-                  <em>Memories</em>
+                  {isIndonesian
+                    ? INDONESIAN_COPY.gallery.title
+                    : "Our Pre-Wedding"}
+                  <em>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.gallery.titleEmphasis
+                      : "Memories"}
+                  </em>
                 </h2>
                 <div
                   className="gallery-frame"
@@ -1269,7 +1350,11 @@ export function InvitationExperience({
                     width={activeGalleryImage.width}
                     height={activeGalleryImage.height}
                     sizes="(max-width: 900px) 74vw, 310px"
-                    alt={"Pre-wedding image " + (galleryIndex + 1)}
+                    alt={`${
+                      isIndonesian
+                        ? INDONESIAN_COPY.gallery.imageAlt
+                        : "Pre-wedding image"
+                    } ${galleryIndex + 1}`}
                   />
                   <span>
                     {String((galleryIndex % galleryImages.length) + 1).padStart(2, "0")} /{" "}
@@ -1278,7 +1363,11 @@ export function InvitationExperience({
                 </div>
                 <div className="gallery-controls">
                   <button
-                    aria-label="Previous image"
+                    aria-label={
+                      isIndonesian
+                        ? INDONESIAN_COPY.gallery.previous
+                        : "Previous image"
+                    }
                     onClick={() =>
                       setGalleryIndex(
                         (current) =>
@@ -1289,9 +1378,17 @@ export function InvitationExperience({
                   >
                     <ArrowLeft size={17} />
                   </button>
-                  <p>Browse our memories</p>
+                  <p>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.gallery.browse
+                      : "Browse our memories"}
+                  </p>
                   <button
-                    aria-label="Next image"
+                    aria-label={
+                      isIndonesian
+                        ? INDONESIAN_COPY.gallery.next
+                        : "Next image"
+                    }
                     onClick={() =>
                       setGalleryIndex(
                         (current) => (current + 1) % galleryImages.length,
@@ -1309,10 +1406,20 @@ export function InvitationExperience({
                 media={media("video")}
                 className="video-section"
               >
-                <p className="eyebrow tracking">From the island of gods</p>
+                <p className="eyebrow tracking">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.video.eyebrow
+                    : "From the island of gods"}
+                </p>
                 <h2 className="section-title">
-                  Our Pre-Wedding Teaser
-                  <em>in Bali</em>
+                  {isIndonesian
+                    ? INDONESIAN_COPY.video.title
+                    : "Our Pre-Wedding Teaser"}
+                  <em>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.video.titleEmphasis
+                      : "in Bali"}
+                  </em>
                 </h2>
                 <div className="video-card">
                   <div className="youtube-embed">
@@ -1330,7 +1437,11 @@ export function InvitationExperience({
                         type="button"
                         className="video-poster"
                         onClick={playWeddingVideo}
-                        aria-label="Play Rudi and Gabriella pre-wedding video"
+                        aria-label={
+                          isIndonesian
+                            ? INDONESIAN_COPY.video.playLabel
+                            : "Play Rudi and Gabriella pre-wedding video"
+                        }
                       >
                         <span>
                           <Play size={25} fill="currentColor" />
@@ -1342,22 +1453,29 @@ export function InvitationExperience({
                     <div
                       className="video-controls"
                       role="group"
-                      aria-label="Video controls"
+                      aria-label={
+                        isIndonesian
+                          ? INDONESIAN_COPY.video.controlsLabel
+                          : "Video controls"
+                      }
                     >
                       <button
                         type="button"
                         onClick={() => controlWeddingVideo("playVideo")}
                       >
-                        <Play size={12} fill="currentColor" /> Play
+                        <Play size={12} fill="currentColor" />{" "}
+                        {isIndonesian ? INDONESIAN_COPY.video.play : "Play"}
                       </button>
                       <button
                         type="button"
                         onClick={() => controlWeddingVideo("pauseVideo")}
                       >
-                        <Pause size={12} fill="currentColor" /> Pause
+                        <Pause size={12} fill="currentColor" />{" "}
+                        {isIndonesian ? INDONESIAN_COPY.video.pause : "Pause"}
                       </button>
                       <button type="button" onClick={stopWeddingVideo}>
-                        <Square size={11} fill="currentColor" /> Stop
+                        <Square size={11} fill="currentColor" />{" "}
+                        {isIndonesian ? INDONESIAN_COPY.video.stop : "Stop"}
                       </button>
                     </div>
                   ) : null}
@@ -1369,21 +1487,39 @@ export function InvitationExperience({
                 media={media("thanks")}
                 className="closing-section"
               >
-                <p className="eyebrow tracking">From our hearts</p>
+                <p className="eyebrow tracking">
+                  {isIndonesian
+                    ? INDONESIAN_COPY.thanks.eyebrow
+                    : "From our hearts"}
+                </p>
                 <h2 className="section-title">
-                  With Love
-                  <em>& Gratitude</em>
+                  {isIndonesian ? INDONESIAN_COPY.thanks.title : "With Love"}
+                  <em>
+                    {isIndonesian
+                      ? INDONESIAN_COPY.thanks.titleEmphasis
+                      : "& Gratitude"}
+                  </em>
                 </h2>
-                <p className="closing-copy">
-                  Having you with us on our special day
-                  <br />
-                  would be an honor and a joy.
-                </p>
-                <p className="closing-copy">
-                  We look forward to celebrating
-                  <br />
-                  this beautiful moment with you.
-                </p>
+                {isIndonesian ? (
+                  INDONESIAN_COPY.thanks.paragraphs.map((paragraph) => (
+                    <p className="closing-copy" key={paragraph}>
+                      {paragraph}
+                    </p>
+                  ))
+                ) : (
+                  <>
+                    <p className="closing-copy">
+                      Having you with us on our special day
+                      <br />
+                      would be an honor and a joy.
+                    </p>
+                    <p className="closing-copy">
+                      We look forward to celebrating
+                      <br />
+                      this beautiful moment with you.
+                    </p>
+                  </>
+                )}
                 <OrnamentalLine />
                 <h3 className="script-name">{content.coupleFormal}</h3>
                 <footer>
