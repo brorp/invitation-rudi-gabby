@@ -1114,39 +1114,41 @@ button {
 }
 
 .gallery-section .section-inner {
-  padding: 46px 31px 60px;
+  justify-content: center;
+  padding: 32px 18px 58px;
+}
+
+.gallery-section .eyebrow {
+  margin-bottom: 7px;
+  font-size: 9px;
+}
+
+.gallery-section .section-title {
+  font-size: 34px;
+  line-height: 0.88;
 }
 
 .gallery-frame {
   position: relative;
-  width: 100%;
-  height: 355px;
-  margin-top: 27px;
+  width: min(100%, 310px);
+  height: auto;
+  margin-top: 16px;
   border: 1px solid rgba(255, 255, 255, 0.45);
-  padding: 8px;
+  padding: 3px;
   background: rgba(0, 0, 0, 0.2);
 }
 
-.gallery-placeholder {
+.gallery-image {
+  display: block;
   width: 100%;
   height: 100%;
-  background-position: center;
-  background-size: cover;
-  transition: background-position 350ms ease;
-}
-
-.gallery-position-1 {
-  background-position: 35% center;
-}
-
-.gallery-position-2 {
-  background-position: 68% center;
+  object-fit: contain;
 }
 
 .gallery-frame > span {
   position: absolute;
-  right: 17px;
-  bottom: 15px;
+  right: 9px;
+  bottom: 8px;
   padding: 4px 7px;
   background: rgba(0, 0, 0, 0.56);
   font-size: 8px;
@@ -1219,7 +1221,7 @@ button {
   border: 0;
   background:
     linear-gradient(rgba(5, 5, 5, 0.12), rgba(5, 5, 5, 0.34)),
-    url("https://i.ytimg.com/vi/szlhyb0xmCI/maxresdefault.jpg") center / cover no-repeat;
+    url("https://i.ytimg.com/vi/xDjzymhd7hQ/maxresdefault.jpg") center / cover no-repeat;
   color: #fff;
   cursor: pointer;
 }
@@ -1240,6 +1242,37 @@ button {
 .video-poster:focus-visible span {
   background: rgba(10, 10, 10, 0.82);
   transform: scale(1.06);
+}
+
+.video-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 8px;
+}
+
+.video-controls button {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0 11px;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.video-controls button:hover,
+.video-controls button:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .closing-copy {
@@ -1414,8 +1447,9 @@ button {
   }
 
   .gallery-frame {
-    height: 300px;
-    margin-top: 18px;
+    width: min(100%, 260px);
+    height: auto;
+    margin-top: 12px;
   }
 
   .form-section .section-inner {

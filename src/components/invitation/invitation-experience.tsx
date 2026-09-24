@@ -11,8 +11,10 @@ import {
   MapPin,
   Menu,
   Music2,
+  Pause,
   Play,
   Send,
+  Square,
   VolumeX,
   X,
 } from "lucide-react";
@@ -68,6 +70,37 @@ const SECTION_LINKS = [
   ["video", "Video"],
   ["thanks", "Closing"],
 ] as const;
+
+const LOCAL_CAROUSEL_IMAGES = [
+  { id: "carousel-1", imageUrl: "/carousel/1.webp", width: 1005, height: 1519 },
+  { id: "carousel-2", imageUrl: "/carousel/2.webp", width: 1005, height: 1519 },
+  { id: "carousel-3", imageUrl: "/carousel/3.webp", width: 1005, height: 1519 },
+  { id: "carousel-4", imageUrl: "/carousel/4.webp", width: 1005, height: 1519 },
+  { id: "carousel-5", imageUrl: "/carousel/5.webp", width: 1256, height: 1899 },
+  { id: "carousel-6", imageUrl: "/carousel/6.webp", width: 1256, height: 1899 },
+  { id: "carousel-7", imageUrl: "/carousel/7.webp", width: 1256, height: 1899 },
+  { id: "carousel-8", imageUrl: "/carousel/8.webp", width: 1270, height: 1920 },
+  { id: "carousel-9", imageUrl: "/carousel/9.webp", width: 1256, height: 1899 },
+  { id: "carousel-10", imageUrl: "/carousel/10.webp", width: 1256, height: 1899 },
+  { id: "carousel-11", imageUrl: "/carousel/11.webp", width: 1256, height: 1899 },
+] as const;
+
+const LOCAL_BACKGROUND_BY_SECTION: Record<string, string> = {
+  cover: "/background/optimized/cover.jpg",
+  intro: "/background/optimized/cover.jpg",
+  groom: "/background/optimized/the-groom.jpg",
+  bride: "/background/optimized/the-bride.jpg",
+  journey: "/background/optimized/our-journey.jpg",
+  events: "/background/optimized/wedding-event.jpg",
+  countdown: "/background/optimized/countdown.jpg",
+  dress: "/background/optimized/dresscode.jpg",
+  rsvp: "/background/optimized/rsvp.jpg",
+  wishes: "/background/optimized/wishes.jpg",
+  gift: "/background/optimized/wedding-gift.jpg",
+  gallery: "/background/optimized/gallery.jpg",
+  video: "/background/optimized/pre-wedding-video.jpg",
+  thanks: "/background/optimized/closing.jpg",
+};
 
 const ATTENDANCE_OPTIONS = {
   en: [
@@ -312,6 +345,7 @@ export function InvitationExperience({
   const [copied, setCopied] = useState(false);
   const paneRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const youtubeFrameRef = useRef<HTMLIFrameElement>(null);
   const content = settings.content;
   const isIndonesian = language === "id";
   const guestName =
@@ -344,14 +378,18 @@ export function InvitationExperience({
   );
 
   const media = useCallback(
-    (key: string) => mediaMap[key] || getSectionMedia(settings, key),
+    (key: string) => {
+      const configured = mediaMap[key] || getSectionMedia(settings, key);
+      return {
+        ...configured,
+        imageUrl: LOCAL_BACKGROUND_BY_SECTION[key] || configured.imageUrl,
+      };
+    },
     [mediaMap, settings],
   );
 
   const activeMedia = media(activeSection);
-  const galleryImages = settings.gallery.length
-    ? settings.gallery
-    : [{ id: "fallback-gallery", imageUrl: media("gallery").imageUrl }];
+  const galleryImages = LOCAL_CAROUSEL_IMAGES;
   const activeGalleryImage =
     galleryImages[galleryIndex % galleryImages.length];
 
@@ -381,6 +419,14 @@ export function InvitationExperience({
       .forEach((element) => observer.observe(element));
     return () => observer.disconnect();
   }, [opened]);
+
+  useEffect(() => {
+    if (!videoStarted || activeSection === "video") return;
+    youtubeFrameRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: "command", func: "pauseVideo", args: [] }),
+      "https://www.youtube.com",
+    );
+  }, [activeSection, videoStarted]);
 
   useEffect(() => {
     if (!opened || !paneRef.current) return;
@@ -438,7 +484,26 @@ export function InvitationExperience({
   function playWeddingVideo() {
     audioRef.current?.pause();
     setMuted(true);
-    setVideoStarted(true);
+    if (!videoStarted) {
+      setVideoStarted(true);
+      return;
+    }
+    controlWeddingVideo("playVideo");
+  }
+
+  function controlWeddingVideo(command: "playVideo" | "pauseVideo") {
+    if (command === "playVideo") {
+      audioRef.current?.pause();
+      setMuted(true);
+    }
+    youtubeFrameRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: "command", func: command, args: [] }),
+      "https://www.youtube.com",
+    );
+  }
+
+  function stopWeddingVideo() {
+    setVideoStarted(false);
   }
 
   function goToSection(key: string) {
@@ -1193,14 +1258,20 @@ export function InvitationExperience({
                   Our Pre-Wedding
                   <em>Memories</em>
                 </h2>
-                <div className="gallery-frame">
-                  <div
-                    className="gallery-placeholder"
-                    style={{
-                      backgroundImage: "url('" + activeGalleryImage.imageUrl + "')",
-                    }}
-                    role="img"
-                    aria-label={"Pre-wedding image " + (galleryIndex + 1)}
+                <div
+                  className="gallery-frame"
+                  style={{
+                    aspectRatio: `${activeGalleryImage.width} / ${activeGalleryImage.height}`,
+                  }}
+                >
+                  <Image
+                    key={activeGalleryImage.id}
+                    className="gallery-image"
+                    src={activeGalleryImage.imageUrl}
+                    width={activeGalleryImage.width}
+                    height={activeGalleryImage.height}
+                    sizes="(max-width: 900px) 74vw, 310px"
+                    alt={"Pre-wedding image " + (galleryIndex + 1)}
                   />
                   <span>
                     {String((galleryIndex % galleryImages.length) + 1).padStart(2, "0")} /{" "}
@@ -1242,15 +1313,16 @@ export function InvitationExperience({
               >
                 <p className="eyebrow tracking">From the island of gods</p>
                 <h2 className="section-title">
-                  Our Pre-Wedding
-                  <em>Video in Bali</em>
+                  Our Pre-Wedding Teaser
+                  <em>in Bali</em>
                 </h2>
                 <div className="video-card">
                   <div className="youtube-embed">
                     {videoStarted ? (
                       <iframe
-                        src="https://www.youtube.com/embed/szlhyb0xmCI?si=4toL31284nZNow6d&autoplay=1&rel=0&playsinline=1&controls=1&fs=1"
-                        title="Rudi and Gabriella pre-wedding video in Bali"
+                        ref={youtubeFrameRef}
+                        src="https://www.youtube.com/embed/xDjzymhd7hQ?si=DGYadPjR2UOwBlr6&autoplay=1&rel=0&playsinline=1&controls=1&fs=1&enablejsapi=1"
+                        title="Rudi and Gabriella pre-wedding video"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         referrerPolicy="strict-origin-when-cross-origin"
                         allowFullScreen
@@ -1268,6 +1340,29 @@ export function InvitationExperience({
                       </button>
                     )}
                   </div>
+                  {videoStarted ? (
+                    <div
+                      className="video-controls"
+                      role="group"
+                      aria-label="Video controls"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => controlWeddingVideo("playVideo")}
+                      >
+                        <Play size={12} fill="currentColor" /> Play
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => controlWeddingVideo("pauseVideo")}
+                      >
+                        <Pause size={12} fill="currentColor" /> Pause
+                      </button>
+                      <button type="button" onClick={stopWeddingVideo}>
+                        <Square size={11} fill="currentColor" /> Stop
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </InvitationSection>
 
