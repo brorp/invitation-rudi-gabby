@@ -980,20 +980,18 @@ export function InvitationExperience({
                     as the celebration itself.
                   </p>
                 )}
-                <div
-                  className="palette"
-                  aria-label={
+                <Image
+                  className="palette-image"
+                  src="/tone.png"
+                  width={2172}
+                  height={724}
+                  sizes="(max-width: 520px) 78vw, 260px"
+                  alt={
                     isIndonesian
                       ? INDONESIAN_COPY.dress.palette
                       : "Suggested color palette"
                   }
-                >
-                  {["#161616", "#5b5751", "#968d81", "#d1c7ba", "#ece6dd"].map(
-                    (color) => (
-                      <span key={color} style={{ backgroundColor: color }} />
-                    ),
-                  )}
-                </div>
+                />
                 <Image
                   className="dress-code-art"
                   src="/DRESSCODE.png"

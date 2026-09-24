@@ -605,16 +605,11 @@ button {
 }
 
 .event-date b {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.64);
-  border-radius: 50%;
   font-family: var(--sans);
   font-size: 21px;
   font-style: normal;
   font-weight: 500;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
@@ -717,6 +712,14 @@ button {
   display: flex;
   gap: 10px;
   margin: 14px 0 27px;
+}
+
+.palette-image {
+  display: block;
+  width: min(100%, 260px);
+  height: auto;
+  margin: 14px auto 20px;
+  object-fit: contain;
 }
 
 .palette span {
