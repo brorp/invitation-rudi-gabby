@@ -2,6 +2,14 @@ import { randomBytes } from "node:crypto";
 
 import { requirePanelSession } from "@/lib/panel-auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import type { AttendanceStatus } from "@/lib/types";
+
+const ALLOWED_ATTENDANCE_STATUSES: AttendanceStatus[] = [
+  "holy_matrimony_only",
+  "reception_only",
+  "both",
+  "not_attending",
+];
 
 export async function PATCH(
   request: Request,
@@ -20,11 +28,53 @@ export async function PATCH(
   if (fullName.length < 2) {
     return Response.json({ error: "Full name is required." }, { status: 400 });
   }
+  const paxAllowed = Math.min(
+    10,
+    Math.max(1, Number(body.pax_allowed) || 1),
+  );
+  const hasAttendanceStatus = body.attendance_status !== undefined;
+  const attendanceStatus = String(
+    body.attendance_status ?? "pending",
+  ) as AttendanceStatus | "pending";
+  if (
+    hasAttendanceStatus &&
+    attendanceStatus !== "pending" &&
+    !ALLOWED_ATTENDANCE_STATUSES.includes(attendanceStatus)
+  ) {
+    return Response.json(
+      { error: "Choose a valid attendance status." },
+      { status: 400 },
+    );
+  }
+  const requestedPaxAttending = Number(body.pax_attending);
+  const attendanceUpdates = !hasAttendanceStatus
+    ? {}
+    : attendanceStatus === "pending"
+      ? {
+          status: "pending",
+          attendance_status: null,
+          pax_attending: null,
+          submission_fingerprint: null,
+          rsvp_submitted_at: null,
+          last_submitted_at: null,
+        }
+      : {
+          status: attendanceStatus === "not_attending" ? "skip" : "attending",
+          attendance_status: attendanceStatus,
+          pax_attending:
+            attendanceStatus === "not_attending"
+              ? 0
+              : Math.min(
+                  paxAllowed,
+                  Math.max(1, requestedPaxAttending || 1),
+                ),
+        };
   const updates = {
     full_name: fullName,
     phone: String(body.phone || "").trim() || null,
-    pax_allowed: Math.min(10, Math.max(1, Number(body.pax_allowed) || 1)),
+    pax_allowed: paxAllowed,
     notes: String(body.notes || "").trim() || null,
+    ...attendanceUpdates,
     ...(body.rotateToken === true
       ? { access_token: randomBytes(24).toString("hex") }
       : {}),

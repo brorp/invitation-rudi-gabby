@@ -15,7 +15,6 @@ import {
   Gauge,
   Heart,
   ImageUp,
-  LayoutGrid,
   LogOut,
   MessageCircle,
   MessageSquareHeart,
@@ -39,13 +38,19 @@ import {
   useState,
 } from "react";
 
-import type { GalleryImage, Invitee, SiteSettings, Wish } from "@/lib/types";
+import type {
+  AttendanceStatus,
+  GalleryImage,
+  Invitee,
+  SiteSettings,
+  Wish,
+} from "@/lib/types";
 
-type Tab = "overview" | "invitees" | "content" | "media" | "wishes";
+type Tab = "invitees" | "content" | "media" | "wishes";
+type PanelAttendanceStatus = AttendanceStatus | "pending";
 
 type SortKey =
   | "full_name"
-  | "status"
   | "pax"
   | "attendance_status"
   | "created_at";
@@ -64,12 +69,33 @@ const NAV_ITEMS: Array<{
   label: string;
   icon: typeof Gauge;
 }> = [
-  { key: "overview", label: "Overview", icon: LayoutGrid },
   { key: "invitees", label: "Invitees", icon: UsersRound },
   { key: "content", label: "Content", icon: Pencil },
   { key: "media", label: "Page visuals", icon: FileImage },
   { key: "wishes", label: "Wishes", icon: MessageSquareHeart },
 ];
+
+const ATTENDANCE_STATUS_OPTIONS: Array<{
+  value: PanelAttendanceStatus;
+  label: string;
+}> = [
+  { value: "pending", label: "Pending" },
+  { value: "holy_matrimony_only", label: "Holy Matrimony Only" },
+  { value: "reception_only", label: "Reception Only" },
+  { value: "both", label: "Attending Both" },
+  { value: "not_attending", label: "Not Attending" },
+];
+
+const ATTENDANCE_STATUS_LABELS = Object.fromEntries(
+  ATTENDANCE_STATUS_OPTIONS.map((option) => [option.value, option.label]),
+) as Record<PanelAttendanceStatus, string>;
+
+function getAttendanceStatus(invitee: Invitee): PanelAttendanceStatus {
+  if (invitee.status === "pending" || !invitee.attendance_status) {
+    return "pending";
+  }
+  return invitee.attendance_status;
+}
 
 function whatsappInvitationMessage(inviteUrl: string) {
   return [
@@ -97,7 +123,7 @@ export function PanelDashboard({
   imageKitConfigured,
 }: Props) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>("invitees");
   const [invitees, setInvitees] = useState(initialInvitees);
   const [wishes, setWishes] = useState(initialWishes);
   const [settings, setSettings] = useState(initialSettings);
@@ -129,6 +155,9 @@ export function PanelDashboard({
         Boolean(invitee.phone?.toLowerCase().includes(query)) ||
         (invitee.status || "pending").toLowerCase().includes(query) ||
         Boolean(invitee.attendance_status?.toLowerCase().includes(query)) ||
+        ATTENDANCE_STATUS_LABELS[getAttendanceStatus(invitee)]
+          .toLowerCase()
+          .includes(query) ||
         Boolean(invitee.notes?.toLowerCase().includes(query)) ||
         invitee.id.toLowerCase().includes(query) ||
         String(invitee.pax_attending ?? "").includes(query) ||
@@ -140,12 +169,10 @@ export function PanelDashboard({
       let cmp = 0;
       if (sortKey === "full_name") {
         cmp = a.full_name.localeCompare(b.full_name);
-      } else if (sortKey === "status") {
-        cmp = (a.status || "pending").localeCompare(b.status || "pending");
       } else if (sortKey === "pax") {
         cmp = (a.pax_attending ?? 0) - (b.pax_attending ?? 0);
       } else if (sortKey === "attendance_status") {
-        cmp = (a.attendance_status ?? "").localeCompare(b.attendance_status ?? "");
+        cmp = getAttendanceStatus(a).localeCompare(getAttendanceStatus(b));
       } else if (sortKey === "created_at") {
         cmp = a.created_at.localeCompare(b.created_at);
       }
@@ -166,14 +193,29 @@ export function PanelDashboard({
   }, [wishes]);
 
   const stats = useMemo(() => {
-    const confirmed = invitees.filter(
-      (item) => (item.status || "pending") !== "pending",
+    const pending = invitees.filter(
+      (item) => getAttendanceStatus(item) === "pending",
     ).length;
-    const pax = invitees.reduce(
-      (total, item) => total + (item.pax_attending || 0),
-      0,
-    );
-    return { confirmed, pax, wishCount: wishes.length };
+    const holyMatrimonyOnly = invitees.filter(
+      (item) => getAttendanceStatus(item) === "holy_matrimony_only",
+    ).length;
+    const receptionOnly = invitees.filter(
+      (item) => getAttendanceStatus(item) === "reception_only",
+    ).length;
+    const attendingBoth = invitees.filter(
+      (item) => getAttendanceStatus(item) === "both",
+    ).length;
+    const notAttending = invitees.filter(
+      (item) => getAttendanceStatus(item) === "not_attending",
+    ).length;
+    return {
+      pending,
+      holyMatrimonyOnly,
+      receptionOnly,
+      attendingBoth,
+      notAttending,
+      wishCount: wishes.length,
+    };
   }, [invitees, wishes]);
 
   function updateContent<K extends keyof SiteSettings["content"]>(
@@ -255,6 +297,8 @@ export function PanelDashboard({
         full_name: form.get("full_name"),
         phone: form.get("phone"),
         pax_allowed: Number(form.get("pax_allowed")),
+        pax_attending: Number(form.get("pax_attending")),
+        attendance_status: form.get("attendance_status"),
         notes: form.get("notes"),
       }),
     });
@@ -593,9 +637,9 @@ export function PanelDashboard({
           </div>
         )}
 
-        {tab === "overview" && (
+        {tab === "invitees" && (
           <div className="panel-view">
-            <div className="metric-grid">
+            <div className="metric-grid invitee-metrics">
               <article>
                 <UsersRound size={19} />
                 <span>Total invitees</span>
@@ -603,29 +647,36 @@ export function PanelDashboard({
                 <p>Across all invitation links</p>
               </article>
               <article>
+                <RefreshCw size={19} />
+                <span>Pending</span>
+                <strong>{stats.pending}</strong>
+                <p>Awaiting an RSVP response</p>
+              </article>
+              <article>
                 <Check size={19} />
-                <span>Responded</span>
-                <strong>{stats.confirmed}</strong>
-                <p>Attendance responses received</p>
+                <span>Holy Matrimony Only</span>
+                <strong>{stats.holyMatrimonyOnly}</strong>
+                <p>Invitees attending the matrimony only</p>
               </article>
               <article>
                 <UserRound size={19} />
-                <span>Attending pax</span>
-                <strong>{stats.pax}</strong>
-                <p>Current confirmed headcount</p>
+                <span>Reception Only</span>
+                <strong>{stats.receptionOnly}</strong>
+                <p>Invitees attending the reception only</p>
               </article>
               <article>
                 <Heart size={19} />
-                <span>Public wishes</span>
-                <strong>{stats.wishCount}</strong>
-                <p>Published guest comments</p>
+                <span>Attending Both</span>
+                <strong>{stats.attendingBoth}</strong>
+                <p>Invitees attending both celebrations</p>
+              </article>
+              <article>
+                <X size={19} />
+                <span>Not Attending</span>
+                <strong>{stats.notAttending}</strong>
+                <p>Invitees unable to attend</p>
               </article>
             </div>
-          </div>
-        )}
-
-        {tab === "invitees" && (
-          <div className="panel-view">
             <div className="panel-actions">
               <label className="panel-search">
                 <Search size={16} />
@@ -690,11 +741,11 @@ export function PanelDashboard({
                     <th>
                       <button
                         className="sort-th"
-                        onClick={() => toggleSort("status")}
-                        aria-label="Sort by status"
+                        onClick={() => toggleSort("attendance_status")}
+                        aria-label="Sort by attendance status"
                       >
-                        Status
-                        {sortKey === "status" ? (
+                        Attendance status
+                        {sortKey === "attendance_status" ? (
                           sortDir === "asc" ? <ArrowUp size={10} /> : <ArrowDown size={10} />
                         ) : <ArrowUpDown size={10} />}
                       </button>
@@ -717,94 +768,103 @@ export function PanelDashboard({
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredInvitees.map((invitee) => (
-                    <tr key={invitee.id}>
-                      <td>
-                        <code className="table-id" title={invitee.id}>
-                          {invitee.id.slice(0, 8)}
-                        </code>
-                      </td>
-                      <td>
-                        <strong>{invitee.full_name}</strong>
-                        <span>{invitee.phone || "No phone number"}</span>
-                      </td>
-                      <td>
-                        {invitee.submission_fingerprint ? (
-                          <span
-                            className="identity-hash"
-                            title={invitee.submission_fingerprint}
-                          >
-                            {invitee.submission_fingerprint.slice(0, 12)}…
-                          </span>
-                        ) : (
-                          <span className="not-submitted">Not submitted</span>
-                        )}
-                      </td>
-                      <td>
-                        <span
-                          className={
-                            "attendance-pill " + (invitee.status || "pending")
-                          }
-                        >
-                          {invitee.status || "pending"}
-                        </span>
-                      </td>
-                      <td>
-                        {invitee.pax_attending ?? 0} / {invitee.pax_allowed}
-                      </td>
-                      <td>
-                        <span
-                          className="table-wish"
-                          title={wishByInvitee.get(invitee.id)?.message}
-                        >
-                          {wishByInvitee.get(invitee.id)?.message || "No wish yet"}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="link-cell">
-                          {invitee.phone && (
-                            <a
-                              className="wa-link"
-                              href={makeWaLink(invitee) ?? "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={`Send WhatsApp to ${invitee.full_name}`}
+                  {filteredInvitees.map((invitee) => {
+                    const attendanceStatus = getAttendanceStatus(invitee);
+                    return (
+                      <tr key={invitee.id}>
+                        <td>
+                          <code className="table-id" title={invitee.id}>
+                            {invitee.id.slice(0, 8)}
+                          </code>
+                        </td>
+                        <td>
+                          <strong>{invitee.full_name}</strong>
+                          <span>{invitee.phone || "No phone number"}</span>
+                        </td>
+                        <td>
+                          {invitee.submission_fingerprint ? (
+                            <span
+                              className="identity-hash"
+                              title={invitee.submission_fingerprint}
                             >
-                              <MessageCircle size={13} /> WA
-                            </a>
+                              {invitee.submission_fingerprint.slice(0, 12)}…
+                            </span>
+                          ) : (
+                            <span className="not-submitted">Not submitted</span>
                           )}
-                          <button
-                            className="copy-link"
-                            onClick={() => copyInviteLink(invitee.access_token)}
+                        </td>
+                        <td>
+                          <span
+                            className={
+                              "attendance-pill " +
+                              attendanceStatus.replaceAll("_", "-")
+                            }
                           >
-                            <Clipboard size={13} /> Copy link
-                          </button>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="row-actions">
-                          <button
-                            aria-label={"Edit " + invitee.full_name}
-                            onClick={() => setEditing(invitee)}
+                            {ATTENDANCE_STATUS_LABELS[attendanceStatus]}
+                          </span>
+                        </td>
+                        <td>
+                          {invitee.pax_attending ?? 0} / {invitee.pax_allowed}
+                        </td>
+                        <td>
+                          <span
+                            className="table-wish"
+                            title={wishByInvitee.get(invitee.id)?.message}
                           >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            aria-label={"Regenerate link for " + invitee.full_name}
-                            onClick={() => rotateInviteLink(invitee)}
-                          >
-                            <RefreshCw size={14} />
-                          </button>
-                          <button
-                            aria-label={"Delete " + invitee.full_name}
-                            onClick={() => deleteInvitee(invitee.id)}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {wishByInvitee.get(invitee.id)?.message ||
+                              "No wish yet"}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="link-cell">
+                            {invitee.phone && (
+                              <a
+                                className="wa-link"
+                                href={makeWaLink(invitee) ?? "#"}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`Send WhatsApp to ${invitee.full_name}`}
+                              >
+                                <MessageCircle size={13} /> WA
+                              </a>
+                            )}
+                            <button
+                              className="copy-link"
+                              onClick={() =>
+                                copyInviteLink(invitee.access_token)
+                              }
+                            >
+                              <Clipboard size={13} /> Copy link
+                            </button>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="row-actions">
+                            <button
+                              aria-label={"Edit " + invitee.full_name}
+                              onClick={() => setEditing(invitee)}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              aria-label={
+                                "Regenerate link for " + invitee.full_name
+                              }
+                              onClick={() => rotateInviteLink(invitee)}
+                            >
+                              <RefreshCw size={14} />
+                            </button>
+                            <button
+                              aria-label={"Delete " + invitee.full_name}
+                              onClick={() => deleteInvitee(invitee.id)}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {filteredInvitees.length === 0 && (
                     <tr>
                       <td colSpan={8} className="empty-table">
@@ -1197,6 +1257,21 @@ export function PanelDashboard({
                 <input name="phone" defaultValue={editing.phone || ""} />
               </label>
               <label>
+                <span>Attendance status</span>
+                <select
+                  name="attendance_status"
+                  defaultValue={getAttendanceStatus(editing)}
+                >
+                  {ATTENDANCE_STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="modal-row">
+              <label>
                 <span>Allowed pax</span>
                 <input
                   name="pax_allowed"
@@ -1204,6 +1279,16 @@ export function PanelDashboard({
                   min="1"
                   max="10"
                   defaultValue={editing.pax_allowed}
+                />
+              </label>
+              <label>
+                <span>Attending pax</span>
+                <input
+                  name="pax_attending"
+                  type="number"
+                  min="0"
+                  max="10"
+                  defaultValue={editing.pax_attending ?? 0}
                 />
               </label>
             </div>

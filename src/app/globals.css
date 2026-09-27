@@ -1869,6 +1869,43 @@ button {
   font-size: 8px;
 }
 
+.metric-grid.invitee-metrics {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.invitee-metrics article {
+  min-height: 116px;
+  padding: 13px 12px;
+}
+
+.invitee-metrics article > svg {
+  top: 13px;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+}
+
+.invitee-metrics article > span {
+  display: block;
+  padding-right: 19px;
+  font-size: 7px;
+  line-height: 1.35;
+}
+
+.invitee-metrics strong {
+  margin: 9px 0 5px;
+  font-size: 29px;
+}
+
+.invitee-metrics p {
+  font-size: 7px;
+  line-height: 1.4;
+}
+
 .panel-two-column,
 .settings-grid {
   display: grid;
@@ -2137,7 +2174,23 @@ button {
   color: #4c754e;
 }
 
-.attendance-pill.skip {
+.attendance-pill.both {
+  background: #e7f1e7;
+  color: #426e48;
+}
+
+.attendance-pill.holy-matrimony-only {
+  background: #f3eee2;
+  color: #826a3e;
+}
+
+.attendance-pill.reception-only {
+  background: #e7edf3;
+  color: #49677f;
+}
+
+.attendance-pill.skip,
+.attendance-pill.not-attending {
   background: #f3e9e7;
   color: #8c4f47;
 }
@@ -2275,6 +2328,7 @@ button {
 
 .settings-card input,
 .panel-modal input,
+.panel-modal select,
 .panel-modal textarea {
   width: 100%;
   min-height: 40px;
@@ -2289,6 +2343,7 @@ button {
 
 .settings-card input:focus,
 .panel-modal input:focus,
+.panel-modal select:focus,
 .panel-modal textarea:focus {
   border-color: #a99072;
   background: #fff;
@@ -2646,13 +2701,17 @@ button {
 
 .modal-row {
   display: grid;
-  grid-template-columns: 1fr 115px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
 @media (max-width: 1040px) {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metric-grid.invitee-metrics {
+    grid-template-columns: repeat(6, minmax(118px, 1fr));
   }
 
   .media-grid {
@@ -2680,7 +2739,7 @@ button {
   }
 
   .panel-sidebar nav {
-    grid-template-columns: repeat(5, minmax(80px, 1fr));
+    grid-template-columns: repeat(4, minmax(80px, 1fr));
     overflow-x: auto;
   }
 
