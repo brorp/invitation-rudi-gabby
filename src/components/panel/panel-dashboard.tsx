@@ -46,7 +46,7 @@ import type {
   Wish,
 } from "@/lib/types";
 
-type Tab = "invitees" | "content" | "media" | "wishes";
+type Tab = "invitees" | "reminders" | "content" | "media" | "wishes";
 type PanelAttendanceStatus = AttendanceStatus | "pending";
 
 type SortKey =
@@ -70,10 +70,19 @@ const NAV_ITEMS: Array<{
   icon: typeof Gauge;
 }> = [
   { key: "invitees", label: "Invitees", icon: UsersRound },
+  { key: "reminders", label: "Reminder", icon: MessageCircle },
   { key: "content", label: "Content", icon: Pencil },
   { key: "media", label: "Page visuals", icon: FileImage },
   { key: "wishes", label: "Wishes", icon: MessageSquareHeart },
 ];
+
+const DEFAULT_REMINDER_COPY = [
+  "Halo {{name}},",
+  "Kami ingin mengingatkan kembali untuk mengisi konfirmasi kehadiran pada undangan pernikahan Rudi & Gabriella.",
+  "Silakan buka undangan dan konfirmasi jumlah tamu melalui link berikut:",
+  "{{link}}",
+  "Terima kasih. Kami tunggu kabar baiknya! ♡",
+].join("\n\n");
 
 const ATTENDANCE_STATUS_OPTIONS: Array<{
   value: PanelAttendanceStatus;
@@ -108,6 +117,18 @@ function whatsappInvitationMessage(inviteUrl: string) {
   ].join("\n\n");
 }
 
+function createWhatsappLink(phone: string | null, message: string) {
+  if (!phone) return null;
+  let normalizedPhone = phone.replace(/[^\d]/g, "");
+  if (!normalizedPhone) return null;
+  if (normalizedPhone.startsWith("0")) {
+    normalizedPhone = "62" + normalizedPhone.slice(1);
+  } else if (normalizedPhone.startsWith("8")) {
+    normalizedPhone = "62" + normalizedPhone;
+  }
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+}
+
 function jsonFetch(url: string, init?: RequestInit) {
   return fetch(url, {
     ...init,
@@ -136,6 +157,9 @@ export function PanelDashboard({
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [uploadingKey, setUploadingKey] = useState("");
+  const [reminderCandidateId, setReminderCandidateId] = useState("");
+  const [reminderInviteeIds, setReminderInviteeIds] = useState<string[]>([]);
+  const [reminderCopy, setReminderCopy] = useState(DEFAULT_REMINDER_COPY);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -193,30 +217,73 @@ export function PanelDashboard({
   }, [wishes]);
 
   const stats = useMemo(() => {
-    const pending = invitees.filter(
-      (item) => getAttendanceStatus(item) === "pending",
-    ).length;
-    const holyMatrimonyOnly = invitees.filter(
-      (item) => getAttendanceStatus(item) === "holy_matrimony_only",
-    ).length;
-    const receptionOnly = invitees.filter(
-      (item) => getAttendanceStatus(item) === "reception_only",
-    ).length;
-    const attendingBoth = invitees.filter(
-      (item) => getAttendanceStatus(item) === "both",
-    ).length;
-    const notAttending = invitees.filter(
-      (item) => getAttendanceStatus(item) === "not_attending",
-    ).length;
-    return {
-      pending,
-      holyMatrimonyOnly,
-      receptionOnly,
-      attendingBoth,
-      notAttending,
-      wishCount: wishes.length,
-    };
+    return invitees.reduce(
+      (summary, invitee) => {
+        const attendanceStatus = getAttendanceStatus(invitee);
+        summary.totalPax += invitee.pax_allowed;
+
+        if (attendanceStatus === "pending") {
+          summary.pending += 1;
+          summary.pendingPax += invitee.pax_allowed;
+        } else if (attendanceStatus === "holy_matrimony_only") {
+          summary.holyMatrimonyOnly += 1;
+          summary.holyMatrimonyOnlyPax += invitee.pax_attending ?? 0;
+        } else if (attendanceStatus === "reception_only") {
+          summary.receptionOnly += 1;
+          summary.receptionOnlyPax += invitee.pax_attending ?? 0;
+        } else if (attendanceStatus === "both") {
+          summary.attendingBoth += 1;
+          summary.attendingBothPax += invitee.pax_attending ?? 0;
+        } else {
+          summary.notAttending += 1;
+          summary.notAttendingPax += invitee.pax_allowed;
+        }
+
+        return summary;
+      },
+      {
+        pending: 0,
+        pendingPax: 0,
+        holyMatrimonyOnly: 0,
+        holyMatrimonyOnlyPax: 0,
+        receptionOnly: 0,
+        receptionOnlyPax: 0,
+        attendingBoth: 0,
+        attendingBothPax: 0,
+        notAttending: 0,
+        notAttendingPax: 0,
+        totalPax: 0,
+        wishCount: wishes.length,
+      },
+    );
   }, [invitees, wishes]);
+
+  const pendingInvitees = useMemo(
+    () =>
+      invitees
+        .filter((invitee) => getAttendanceStatus(invitee) === "pending")
+        .sort((a, b) => a.full_name.localeCompare(b.full_name)),
+    [invitees],
+  );
+
+  const reminderInvitees = useMemo(
+    () =>
+      reminderInviteeIds
+        .map((id) => invitees.find((invitee) => invitee.id === id))
+        .filter(
+          (invitee): invitee is Invitee =>
+            invitee !== undefined && getAttendanceStatus(invitee) === "pending",
+        ),
+    [invitees, reminderInviteeIds],
+  );
+
+  const availableReminderInvitees = useMemo(
+    () =>
+      pendingInvitees.filter(
+        (invitee) => !reminderInviteeIds.includes(invitee.id),
+      ),
+    [pendingInvitees, reminderInviteeIds],
+  );
 
   function updateContent<K extends keyof SiteSettings["content"]>(
     key: K,
@@ -547,14 +614,52 @@ export function PanelDashboard({
   }
 
   function makeWaLink(invitee: Invitee) {
-    if (!invitee.phone) return null;
     const inviteUrl =
       window.location.origin + "/invite/" + encodeURIComponent(invitee.access_token);
     const text = whatsappInvitationMessage(inviteUrl);
-    let phone = invitee.phone.replace(/[^\d]/g, "");
-    if (phone.startsWith("0")) phone = "62" + phone.slice(1);
-    else if (phone.startsWith("8")) phone = "62" + phone;
-    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    return createWhatsappLink(invitee.phone, text);
+  }
+
+  function getReminderMessage(invitee: Invitee) {
+    const inviteUrl =
+      window.location.origin +
+      "/invite/" +
+      encodeURIComponent(invitee.access_token);
+    return reminderCopy
+      .replaceAll("{{name}}", invitee.full_name)
+      .replaceAll("{{link}}", inviteUrl);
+  }
+
+  function makeReminderWaLink(invitee: Invitee) {
+    return createWhatsappLink(invitee.phone, getReminderMessage(invitee));
+  }
+
+  function addReminderInvitee() {
+    if (!reminderCandidateId) {
+      setMessage("Choose a pending invitee first.");
+      return;
+    }
+    setReminderInviteeIds((current) =>
+      current.includes(reminderCandidateId)
+        ? current
+        : [...current, reminderCandidateId],
+    );
+    setReminderCandidateId("");
+  }
+
+  function addAllPendingInvitees() {
+    setReminderInviteeIds(pendingInvitees.map((invitee) => invitee.id));
+  }
+
+  function removeReminderInvitee(id: string) {
+    setReminderInviteeIds((current) =>
+      current.filter((inviteeId) => inviteeId !== id),
+    );
+  }
+
+  async function copyReminderMessage(invitee: Invitee) {
+    await navigator.clipboard.writeText(getReminderMessage(invitee));
+    setMessage(`Reminder copy for ${invitee.full_name} copied.`);
   }
 
   async function logout() {
@@ -584,6 +689,9 @@ export function PanelDashboard({
               {item.label}
               {item.key === "wishes" && stats.wishCount > 0 && (
                 <span>{stats.wishCount}</span>
+              )}
+              {item.key === "reminders" && stats.pending > 0 && (
+                <span>{stats.pending}</span>
               )}
             </button>
           ))}
@@ -643,37 +751,55 @@ export function PanelDashboard({
               <article>
                 <UsersRound size={19} />
                 <span>Total invitees</span>
-                <strong>{invitees.length}</strong>
+                <strong>
+                  {invitees.length}
+                  | {stats.totalPax} pax
+                </strong>
                 <p>Across all invitation links</p>
               </article>
               <article>
                 <RefreshCw size={19} />
                 <span>Pending</span>
-                <strong>{stats.pending}</strong>
+                <strong>
+                  {stats.pending}
+                  | {stats.pendingPax} pax
+                </strong>
                 <p>Awaiting an RSVP response</p>
               </article>
               <article>
                 <Check size={19} />
                 <span>Holy Matrimony Only</span>
-                <strong>{stats.holyMatrimonyOnly}</strong>
+                <strong>
+                  {stats.holyMatrimonyOnly}
+                  | {stats.holyMatrimonyOnlyPax} pax
+                </strong>
                 <p>Invitees attending the matrimony only</p>
               </article>
               <article>
                 <UserRound size={19} />
                 <span>Reception Only</span>
-                <strong>{stats.receptionOnly}</strong>
+                <strong>
+                  {stats.receptionOnly}
+                  | {stats.receptionOnlyPax} pax
+                </strong>
                 <p>Invitees attending the reception only</p>
               </article>
               <article>
                 <Heart size={19} />
                 <span>Attending Both</span>
-                <strong>{stats.attendingBoth}</strong>
+                <strong>
+                  {stats.attendingBoth}
+                  | {stats.attendingBothPax} pax
+                </strong>
                 <p>Invitees attending both celebrations</p>
               </article>
               <article>
                 <X size={19} />
                 <span>Not Attending</span>
-                <strong>{stats.notAttending}</strong>
+                <strong>
+                  {stats.notAttending} 
+                   | {stats.notAttendingPax} pax
+                </strong>
                 <p>Invitees unable to attend</p>
               </article>
             </div>
@@ -875,6 +1001,172 @@ export function PanelDashboard({
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {tab === "reminders" && (
+          <div className="panel-view reminder-view">
+            <div className="reminder-layout">
+              <article className="panel-card reminder-composer">
+                <div className="reminder-section-heading">
+                  <div>
+                    <span>Custom copywriting</span>
+                    <h2>WhatsApp reminder</h2>
+                  </div>
+                  <MessageCircle size={19} />
+                </div>
+                <p>
+                  Edit the message once. Each WhatsApp link automatically uses
+                  the invitee&apos;s name and private invitation link.
+                </p>
+                <label>
+                  <span>Reminder message</span>
+                  <textarea
+                    rows={10}
+                    value={reminderCopy}
+                    onChange={(event) => setReminderCopy(event.target.value)}
+                  />
+                </label>
+                <div className="reminder-tokens" aria-label="Available tokens">
+                  <span>Available tokens</span>
+                  <code>{"{{name}}"}</code>
+                  <code>{"{{link}}"}</code>
+                </div>
+              </article>
+
+              <article className="panel-card reminder-picker">
+                <div className="reminder-section-heading">
+                  <div>
+                    <span>Pending RSVP</span>
+                    <h2>Add invitees</h2>
+                  </div>
+                  <UsersRound size={19} />
+                </div>
+                <p>
+                  Only invitees who have not submitted their RSVP are shown.
+                </p>
+                <label>
+                  <span>Invitee</span>
+                  <select
+                    value={reminderCandidateId}
+                    onChange={(event) =>
+                      setReminderCandidateId(event.target.value)
+                    }
+                    disabled={availableReminderInvitees.length === 0}
+                  >
+                    <option value="">
+                      {availableReminderInvitees.length
+                        ? "Choose a pending invitee"
+                        : "All pending invitees are added"}
+                    </option>
+                    {availableReminderInvitees.map((invitee) => (
+                      <option key={invitee.id} value={invitee.id}>
+                        {invitee.full_name}
+                        {invitee.phone ? ` · ${invitee.phone}` : " · no phone"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="reminder-picker-actions">
+                  <button
+                    type="button"
+                    className="panel-primary"
+                    onClick={addReminderInvitee}
+                    disabled={!reminderCandidateId}
+                  >
+                    <Plus size={15} /> Add invitee
+                  </button>
+                  <button
+                    type="button"
+                    className="panel-secondary"
+                    onClick={addAllPendingInvitees}
+                    disabled={pendingInvitees.length === 0}
+                  >
+                    <UsersRound size={15} /> Add all pending
+                  </button>
+                </div>
+                <div className="reminder-selection-summary">
+                  <strong>{reminderInvitees.length}</strong>
+                  <span>selected from {pendingInvitees.length} pending</span>
+                </div>
+              </article>
+            </div>
+
+            <div className="reminder-list-heading">
+              <div>
+                <span>Ready to send</span>
+                <h2>Reminder recipients</h2>
+              </div>
+              {reminderInvitees.length > 0 && (
+                <button
+                  type="button"
+                  className="panel-secondary"
+                  onClick={() => setReminderInviteeIds([])}
+                >
+                  Clear list
+                </button>
+              )}
+            </div>
+
+            {reminderInvitees.length > 0 ? (
+              <div className="reminder-recipient-grid">
+                {reminderInvitees.map((invitee) => {
+                  const whatsappLink = makeReminderWaLink(invitee);
+                  return (
+                    <article className="reminder-recipient-card" key={invitee.id}>
+                      <div className="reminder-recipient-meta">
+                        <div>
+                          <strong>{invitee.full_name}</strong>
+                          <span>{invitee.phone || "No WhatsApp number"}</span>
+                        </div>
+                        <span className="attendance-pill pending">Pending</span>
+                      </div>
+                      <details className="reminder-preview">
+                        <summary>Preview personalized message</summary>
+                        <p>{getReminderMessage(invitee)}</p>
+                      </details>
+                      <div className="reminder-recipient-actions">
+                        <button
+                          type="button"
+                          className="panel-secondary"
+                          onClick={() => copyReminderMessage(invitee)}
+                        >
+                          <Clipboard size={14} /> Copy text
+                        </button>
+                        {whatsappLink ? (
+                          <a
+                            className="panel-primary"
+                            href={whatsappLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <MessageCircle size={14} /> Open WhatsApp
+                          </a>
+                        ) : (
+                          <span className="reminder-missing-phone">
+                            Add a phone number first
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          className="reminder-remove"
+                          onClick={() => removeReminderInvitee(invitee.id)}
+                          aria-label={`Remove ${invitee.full_name} from reminder list`}
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="panel-empty-state reminder-empty-state">
+                <MessageCircle size={25} />
+                <h2>No reminder recipients yet</h2>
+                <p>Add one or more pending invitees to generate WhatsApp links.</p>
+              </div>
+            )}
           </div>
         )}
 
